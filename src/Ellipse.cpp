@@ -1,5 +1,5 @@
-#include "Disk.h"
+#include "Ellipse.h"
 
-double Disk::get_radius() const {return radius;}
-double Disk::get_center1() const {return center1;}
-double Disk::get_center2() const {return center2;}
+double Ellipse::get_a() const {return a;}
+double Ellipse::get_k() const {return k;}
+double Ellipse::get_dif() const {return dif;}
