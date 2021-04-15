@@ -1,9 +1,4 @@
 #include "OP.h"
-#include "Rect.h"
-#include "lrCost.h"
-#include "Ellipse.h"
-#include "Geom0.h"
-#include "Geom1.h"
 
 #include "math.h"
 
@@ -37,7 +32,7 @@ List lrFPOP2D(std::vector<double> x, std::vector<double> y, double penalty, int 
   if(x.size() != y.size()){throw std::range_error("x and y have different length");}
   if(penalty < 0) {throw std::range_error("penalty should be a non-negative number");}
   if(type < 0 || type > 3)
-  {throw std::range_error("type must be one of: 0,1");}
+  {throw std::range_error("type must be one of: 0,3");}
   //----------------------------------------------------------------------------
   List res;
   bool test;
@@ -52,10 +47,10 @@ List lrFPOP2D(std::vector<double> x, std::vector<double> y, double penalty, int 
     res["aCoef"] = N.get_aCoef();
     res["globalCost"] = N.get_globalCost();
   }
-  if (type == 1)
+  if (type == 3)
   {
     //test = true;//
-    OP<Geom1> N = OP<Geom1>(x, y, penalty);
+    OP<Geom3> N = OP<Geom3>(x, y, penalty);
     N.algoFPOP(x, y, type, test);  
     res["chpts"] = N.get_chpts();
     res["kCoef"] = N.get_kCoef();

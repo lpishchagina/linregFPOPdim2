@@ -6,33 +6,54 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 using namespace std;
-//The method of least squares
-//k =  [(t-i+1)sum_{j = i}^t (x_j*y_j) - sum_{j = i}^t (x_j)*sum_{j = i}^t(y_j)]/[(t-i+1)*sum_{j = i}^t (x_j^2) - (sum_{j = i}^t x_j)^2]
-//a = [sum_{j = i}^t (y_j^2)  - b* sum_{j = i}^t (x_j)]/(t-i+1)
-//value_min - cost function minimum
-
-// qmin = q(a,k)
-
-//S[0]=xy,S[1]=x,S[2]=y,S[3]=x^2,S[4]=y^2
 
 //constructor*******************************************************************
 lrCost::lrCost(unsigned int i, unsigned int t,double* Si1, double* St, double mi_1pen){
+  mi1p = mi_1pen;   
   cnst = t - i + 1;
-  mi1p = mi_1pen;   //S[0]=xy,S[1]=x,S[2]=y,S[3]=x^2,S[4]=y^2
+  
+  /*comment---------------------------------------------------------------------
+  Notations: Sj[0]=sum_j(x_jy_j),Sj[1]=sum_j(x_j),Sj[2]=sum_j(y_j),Sj[3]=sum_j(x_j^2),S_j[4]=sum(y_j^2);
+  
+  Estimations:
+    k =  [(t-i+1)sum_{j = i}^t (x_j*y_j) - sum_{j = i}^t (x_j)*sum_{j = i}^t(y_j)]/[(t-i+1)*sum_{j = i}^t (x_j^2) - (sum_{j = i}^t x_j)^2];
+    a = [sum_{j = i}^t (y_j^2)  - k* sum_{j = i}^t (x_j)]/(t-i+1);
+  ----------------------------------------------------------------------------*/
   k = (cnst* (St[0] - Si1[0]) - (St[2] - Si1[2])*(St[1] - Si1[1]))/(cnst*(St[3] - Si1[3]) - (St[1] - Si1[1])*(St[1] - Si1[1]));
   a = ((St[2] - Si1[2]) - k*(St[1] - Si1[1]))/cnst; 
   
-  value_min = mi1p + cnst*a*a - 2*k*(St[0] - Si1[0]) +2*a*k*(St[1] - Si1[1]) - 2*a*(St[2] - Si1[2]) + k*k*(St[3] - Si1[3]) + (St[4] - Si1[4]);
+  /*comment---------------------------------------------------------------------
+    value_min =  k*k*sum_{j=i}^t(x_j^2) + 2*a*k*sum_{j=i}^t(x_j) + (t-i+1)*a*a - 2*k*sum_{j=i}^t(x_j*y_j) - 2*a*sum_{j=i}^t(y_j) + sum_{j=i}^t(y_j^2) + mi1p;
+  
+    value_min =  k*k*(St[3]-Si1[3]) + 2*a*k*(St[1]-Si1[1]) + cnst*a*a + 2*k*(Si1[0]-St[0]) + 2*a*(Si1[2]-St[2]) + (St[4]-Si1[4]) + mi1p;
+  
+    value_min = A*k^2 + 2*B*k*a + C*a^2 + 2*D*k + 2*E*a + F;
+  ----------------------------------------------------------------------------*/
+  //Parameters
+  A = St[3] - Si1[3]; 
+  B = St[1] - Si1[1];
+  C = cnst;
+  D = Si1[0] - St[0]; 
+  E = Si1[2] - St[2];
+  F = St[4] - Si1[4] + mi1p;
+  
+  value_min = A*k*k + 2*a*k*B + C*a*a + + 2*k*D + 2*a*E + F + mi1p;
+  /*comment: Fun(a,k) = 0, Fun(k,a) = A*k^2+2*B*k*a+C*a^2+2*D*k+2*E*a+(F-value_min) = 0 */
+  F = F-value_min;
 }
 //accessory*********************************************************************
 unsigned int lrCost::get_cnst()const{return cnst;}
-
 double lrCost::get_mi1p()const{return mi1p;}
 
 double lrCost::get_k()const{return k;}
-
 double lrCost::get_a()const{return a;}
 
-double lrCost::get_min()const{return value_min;}
+double lrCost::get_A()const{return A;}
+double lrCost::get_B()const{return B;}
+double lrCost::get_C()const{return C;}
+double lrCost::get_D()const{return D;}
+double lrCost::get_E()const{return E;}
+double lrCost::get_F()const{return F;}
 
+double lrCost::get_min()const{return value_min;}
 //******************************************************************************

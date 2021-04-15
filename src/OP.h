@@ -1,11 +1,7 @@
 #ifndef OP_H
 #define OP_H
-
-#include "Rect.h"
-#include "Ellipse.h"
-#include "lrCost.h"
 #include "Geom0.h"
-#include "Geom1.h"
+#include "Geom3.h"
 
 #include <fstream>
 #include <iostream>
@@ -102,14 +98,14 @@ public:
     lrCost cost;
     GeomX geom = GeomX(0);
     std::list<GeomX> list_geom;    //list of geometry
-    std::list<Ellipse> list_Ellipse;//list of active Ellipses(t-1)
+    std::list<Ellps> list_Ellps;//list of active ellipses(t-1)
     for (unsigned int t = 0; t < n ; t++){
       cost = lrCost(t, t, Sum[t], Sum[t+1], m[t]);
-      min_val = cost.get_min(Sum[t], Sum[t+1]);              
+      min_val = cost.get_min();              
       kTemp =  cost.get_k();   
       aTemp = cost.get_a(); 
       lbl = t;
-//    list_Ellipse.clear();
+      list_Ellps.clear();
 
       //First run: searching min------------------------------------------------
       typename std::list<GeomX>::reverse_iterator rit_geom = list_geom.rbegin();
@@ -117,16 +113,15 @@ public:
         u = rit_geom -> get_label_t(); 
         // Searching: min
         cost = lrCost(u, t, Sum[u], Sum[t + 1], m[u]);
-        if( min_val >= cost.get_min(){
+        if( min_val >= cost.get_min()){
           lbl = u;
           min_val = cost.get_min();
           kTemp = cost.get_k();
           aTemp = cost.get_a();  
         }
-//        list of active Ellipses(t-1)
-//        cost = Cost(u, t-1, Sum[u], Sum[t], m[u]);
-//        mdif = (m[t + 1] - m[lbl] - cost.get_min(); //????? 
-//        list_Ellipse.push_back(Ellipse(cost.get_a(),cost_get_k, mdif);
+        //list of active Ellpss(t-1)
+        cost = lrCost(u, t-1, Sum[u], Sum[t], m[u]);
+        list_Ellps.push_back(Ellps(cost));
         ++rit_geom;
       }
       //best last changepoints and means
@@ -137,7 +132,7 @@ public:
       m[t + 1] = min_val + penalty;
       
       //Initialisation of geometry----------------------------------------------
-      geom.InitialGeometry(t, list_Ellipse);
+      geom.InitialGeometry(t, list_Ellps);
       list_geom.push_back(geom);
       
       //Second run: Update list of geometry-------------------------------------
@@ -145,14 +140,14 @@ public:
       while (it_geom != list_geom.end()){
         lbl = it_geom -> get_label_t();
         cost = lrCost(lbl, t, Sum[lbl], Sum[t + 1], m[lbl]);
-        mdif = (m[t + 1] - m[lbl] - cost.get_min(); //????? ////if qit(a,k)> mt+penalty =>PELT
+        mdif = m[t + 1] - m[lbl] - cost.get_min(); //if qit(a,k)> mt+penalty =>PELT
         //PELT
         if (mdif <= 0){it_geom = list_geom.erase(it_geom); --it_geom;}
         //FPOP
         if (mdif > 0){
-          it_geom -> UpdateGeometry(Ellipse(cost.get_a(),cost_get_k, mdif)); /// ?????
+          it_geom -> UpdateGeometry(Ellps(cost));
           if (it_geom -> EmptyGeometry()){it_geom = list_geom.erase(it_geom);--it_geom;}
-          else {if (test_mode == true && (type == 2 || type == 3)){ test_file << it_geom ->get_label_t() << " "<< it_geom ->get_Ellipses_t_1().size() << " ";}}
+          else {if (test_mode == true && (type == 2 || type == 3)){ test_file << it_geom ->get_label_t() << " "<< it_geom ->get_ellps().size() << " ";}}
         }//else
         ++it_geom;
       }

@@ -6,8 +6,8 @@
 using namespace Rcpp;
 
 // lrFPOP2D
-List rcpp_hello_world();
-RcppExport SEXP _linregFPOPdim2_lrFPOP2D() {
+List lrFPOP2D(std::vector<double> x, std::vector<double> y, double penalty, int type);
+RcppExport SEXP _linregFPOPdim2_lrFPOP2D(SEXP xSEXP, SEXP ySEXP, SEXP penaltySEXP, SEXP typeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -21,7 +21,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_linregFPOPdim2_lrFPOP2D", (DL_FUNC) &_linregFPOPdim2_lrFPOP2D, 0},
+    {"_linregFPOPdim2_lrFPOP2D", (DL_FUNC) &_linregFPOPdim2_lrFPOP2D, 4},
     {NULL, NULL, 0}
 };
 
