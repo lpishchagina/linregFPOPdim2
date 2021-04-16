@@ -1,8 +1,9 @@
 #include "Geom3.h"
 
 #include <iostream>
-#include <iterator>
+
 #include <list>
+#include <iterator>
 #include <math.h>
 #include <Rcpp.h>
 
@@ -36,18 +37,48 @@ void Geom3::InitialGeometry(unsigned int i, const std::list<Ellps> &ellpses){
 }
 
 //UpdateGeometry****************************************************************
-void Geom3::UpdateGeometry(const Ellps &elt){
+void Geom3::UpdateGeometry ( Ellps &elt){
   std::list<Ellps>::iterator iter = ellps.begin();
   while( iter != ellps.end()){
+    //if elt inside (*iter) => empty geometry
     if ((*iter).insd_ellps(elt)) {
       fl_empty = true;
       return;
     }
-    //if (elt.empty_intersection(*iter) ) {iter = disks_t_1.erase(iter);}
-    //else {++iter;}
+    //if (*iter)center inside elt => exist intersection next *iter 
+    if (elt.insd_pnt((*iter).x_XY((*iter).get_d1(),(*iter).get_d2(),elt.get_d1(),elt.get_d2(), elt.get_angl()), (*iter).y_XY((*iter).get_d1(),(*iter).get_d2(),elt.get_d1(),elt.get_d2(), elt.get_angl()) ))
+    { ++iter;}
+    else{ // check distance from center elt to nearest point (*iter
+        //if (elt.empty_intersection(*iter) ) {iter = ellps.erase(iter);}
+        //else {++iter;}
+    }
   }
 } 
 
+
+/*
+//UpdateGeometry****************************************************************
+void Geom3::UpdateGeometry ( Ellps &elt){
+  std::list<Ellps>::iterator iter = ellps.begin();
+  while( iter != ellps.end()){
+    //if elt inside (*iter) => empty geometry
+    if ((*iter).insd_ellps(elt)) {
+      fl_empty = true;
+      return;
+    }
+    //if (*iter) inside elt => next *iter 
+    if (elt.insd_ellps(*iter)) { ++iter;}
+    else{
+      if 
+      
+      // check distance from center elt to nearest point (*iter)
+      
+      //if (elt.empty_intersection(*iter) ) {iter = ellps.erase(iter);}
+      //else {++iter;}
+    }
+  }
+} 
+*/
 //EmptyGeometry*****************************************************************
 bool Geom3::EmptyGeometry() {return fl_empty;}
 

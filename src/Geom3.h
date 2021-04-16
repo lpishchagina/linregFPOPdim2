@@ -34,7 +34,7 @@ class Geom3
     double Dist(double a1, double a2, double b1, double b2);
     
     void InitialGeometry(unsigned int i, const std::list<Ellps> &ellpses);
-    void UpdateGeometry(const Ellps &elt);
+    void UpdateGeometry(Ellps &elt);
     bool EmptyGeometry();
 };
 #endif //GEOM3_H

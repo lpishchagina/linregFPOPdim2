@@ -22,7 +22,7 @@ std::list<Ellps> Geom0::get_ellps() const {return ellps;}
 void Geom0::InitialGeometry(unsigned int i, const std::list<Ellps> &ellpses){label_t = i;}
 
 //UpdateGeometry****************************************************************
-void Geom0::UpdateGeometry(const Ellps &elt){} 
+void Geom0::UpdateGeometry(Ellps &elt){} 
 
 //EmptyGeometry*****************************************************************
 bool Geom0::EmptyGeometry() {return false;}
