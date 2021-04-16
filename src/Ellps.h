@@ -26,6 +26,8 @@ private:
   double angl;
   //coefficients
   double a, b, c2;
+  //focus F1 (-F, 0), F2(F, 0)
+  double F;
 public:
   Ellps(){};
   Ellps(const lrCost &Q);  
@@ -36,6 +38,8 @@ public:
   double get_a() const;
   double get_b() const;
   double get_c2() const;
+  
+  double get_F() const;
   
   double get_lmbd1() const;
   double get_lmbd2() const;
@@ -48,6 +52,8 @@ public:
   bool insd_ellps(const Ellps &El);
   
   double dst_pnts(double x1, double y1, double x2, double y2);
+  
+  double dst_ellps_pnt(double x1, double y1);
  
   double x_XY(double X, double Y, double dx, double dy, double angle);
   double y_XY(double X, double Y, double dx, double dy, double angle);

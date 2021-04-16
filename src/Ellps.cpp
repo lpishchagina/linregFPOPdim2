@@ -31,7 +31,8 @@ Ellps::Ellps(const lrCost & Q)
     a = sqrt((-inv3/inv2)/lmbd1);     
     b = sqrt((-inv3/inv2)/(inv1 - lmbd1));
     c2 = (-inv3/inv2)/(lmbd1*(inv1 - lmbd1));
-  } else{ d1 = 0; d1 = 0; a = 0; b = 0; c2 = 0; angl = 0; k1 =0; k2 = 0; lmbd1 = 0; lmbd2 = 0;}
+    F = sqrt(a*a -b*b);
+  } else{ d1 = 0; d1 = 0; a = 0; b = 0; c2 = 0; angl = 0; k1 =0; k2 = 0; lmbd1 = 0; lmbd2 = 0; F = 0;}
 }
 
 //accessory*********************************************************************
@@ -48,9 +49,16 @@ double Ellps::get_lmbd2() const {return lmbd2;}
 double Ellps::get_a() const {return a;}
 double Ellps::get_b() const {return b;}
 double Ellps::get_c2() const {return c2;}
+double Ellps::get_F() const {return F;}
 
 //dist_pnts********************************************************************
 double Ellps::dst_pnts(double x1, double y1, double x2, double y2){return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));}
+
+
+//dst_ellps_pnt*****************************************************************
+//|F1P|+|F2P| = 2(a+d) => d = (|F1P|+|F2P|)/2 -a
+double Ellps::dst_ellps_pnt(double x1, double y1){ return  (abs((dst_pnts(x1,y1,(-F),0) + dst_pnts(x1,y1,(F),0))/2 - a));}
+
 
 //insd_pnt********************************************************************
 bool  Ellps::insd_pnt(double x, double y){ if ((x*x/a*a + y*y/b*b) < c2) {return true;} else {return false;}}
