@@ -2,7 +2,7 @@
 #include "math.h"
 
 //constructor*******************************************************************
-Ellps::Ellps(const lrCost & Q)
+Ellps::Ellps(lrCost Q)
 {
   double inv1 = Q.get_A()+Q.get_C();
   double inv2 = Q.get_A()*Q.get_C() - Q.get_B()*Q.get_B();
@@ -31,6 +31,7 @@ Ellps::Ellps(const lrCost & Q)
     a = sqrt((-inv3/inv2)/lmbd1);     
     b = sqrt((-inv3/inv2)/(inv1 - lmbd1));
     c2 = (-inv3/inv2)/(lmbd1*(inv1 - lmbd1));
+    //Focus
     F = sqrt(a*a -b*b);
   } else{ d1 = 0; d1 = 0; a = 0; b = 0; c2 = 0; angl = 0; k1 =0; k2 = 0; lmbd1 = 0; lmbd2 = 0; F = 0;}
 }
@@ -70,33 +71,34 @@ double Ellps::get_r(double x, double y){      //r = |2rx-x0|*|2ry-y0|/sqrt((2rx-
   return (4*abs(a*b)/sqrt(2*(b*b*csns*csns + a*a*sns*sns)));
 }
 
-//XY_xy********************************************************************
-// //(X,Y)- Decart coord, (x,y) - modification
-double  Ellps::X_xy(double x, double y, double dx, double dy, double angle){return x*cos(angle) - y*sin(angle) +dx;}
-double  Ellps::Y_xy(double x, double y, double dx, double dy, double angle){return x*sin(angle) + y*cos(angle) +dy;}
-double  Ellps::x_XY(double X, double Y, double dx, double dy, double angle){return (X - dx)*cos(angle) + (Y - dy)*sin(angle);}
-double  Ellps::y_XY(double X, double Y, double dx, double dy, double angle){return -(X - dx)*sin(angle) + (Y - dy)*cos(angle);}
+//******************************************************************************
+//(X,Y)- Descart coord
+double  Ellps::X_xy(double x, double y){return x*cos(angl) - y*sin(angl) +d1;}
+double  Ellps::Y_xy(double x, double y){return x*sin(angl) + y*cos(angl) +d2;}
+//(x,y) - modification
+double  Ellps::x_XY(double X, double Y){return (X - d1)*cos(angl) + (Y - d2)*sin(angl);}
+double  Ellps::y_XY(double X, double Y){return -(X - d1)*sin(angl) + (Y - d2)*cos(angl);}
 
 //******************************************************************************
-bool  Ellps::insd_ellps(const Ellps & El){
+bool  Ellps::insd_ellps(Ellps & El){
   //(0,0)
-  if (!insd_pnt(x_XY(El.get_d1(), El.get_d2(), d1,d2, angl), y_XY(El.get_d1(), El.get_d2(), d1,d2, angl))){return false;}
+  if (!insd_pnt(x_XY(El.get_d1(), El.get_d2()), y_XY(El.get_d1(), El.get_d2()))){return false;}
   //(-a,0)
-  double X = X_xy((-El.get_a()), 0, El.get_d1(), El.get_d2(), El.get_angl());
-  double Y = Y_xy((-El.get_a()), 0, El.get_d1(), El.get_d2(), El.get_angl());
-  if (!insd_pnt(x_XY(X,Y, d1,d2, angl),y_XY(X,Y, d1,d2, angl))){return false;}
+  double X = El.X_xy((-El.get_a()), 0);
+  double Y = El.Y_xy((-El.get_a()), 0);
+  if (!insd_pnt(x_XY(X,Y),y_XY(X,Y))){return false;}
   //(a,0) 
-  X = X_xy(El.get_a(), 0, El.get_d1(), El.get_d2(), El.get_angl());
-  Y = Y_xy(El.get_a(), 0, El.get_d1(), El.get_d2(), El.get_angl());
-  if (!insd_pnt(x_XY(X,Y, d1,d2, angl),y_XY(X,Y, d1,d2, angl))){return false;}
+  X = El.X_xy(El.get_a(), 0);
+  Y = El.Y_xy(El.get_a(), 0);
+  if (!insd_pnt(x_XY(X,Y),y_XY(X,Y))){return false;}
   //(0,-b) 
-  X = X_xy(0, (-El.get_b()), El.get_d1(), El.get_d2(), El.get_angl());
-  Y = Y_xy(0, (-El.get_b()), El.get_d1(), El.get_d2(), El.get_angl());
-  if (!insd_pnt(x_XY(X,Y, d1,d2, angl),y_XY(X,Y, d1,d2, angl))){return false;}
+  X = El.X_xy(0, (-El.get_b()));
+  Y = El.Y_xy(0, (-El.get_b()));
+  if (!insd_pnt(x_XY(X,Y), y_XY(X,Y))){return false;}
   //(0,-b) 
-  X = X_xy(0, El.get_b(), El.get_d1(), El.get_d2(), El.get_angl());
-  Y = Y_xy(0, El.get_b(), El.get_d1(), El.get_d2(), El.get_angl());
-  if (!insd_pnt(x_XY(X,Y, d1,d2, angl),y_XY(X,Y, d1,d2, angl))){return false;}
+  X = El.X_xy(0, El.get_b());
+  Y = El.Y_xy(0, El.get_b());
+  if (!insd_pnt(x_XY(X,Y),y_XY(X,Y))){return false;}
   return true;
 }
-  
+//****************************************************************************** 

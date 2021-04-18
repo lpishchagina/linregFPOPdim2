@@ -25,7 +25,7 @@ class Geom0
     std::list<Ellps> get_ellps() const;
     
     void InitialGeometry(unsigned int i, const std::list<Ellps> &ellpses);
-    void UpdateGeometry(Ellps & elt);
+    void UpdateGeometry(const Ellps & elt);
     bool EmptyGeometry();
 };
 #endif //GEOM0_H

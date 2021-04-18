@@ -30,7 +30,7 @@ private:
   double F;
 public:
   Ellps(){};
-  Ellps(const lrCost &Q);  
+  Ellps(lrCost Q);  
   //accessory
   double get_d1() const;
   double get_d2() const;
@@ -49,17 +49,16 @@ public:
   double get_angl() const;
   
   bool insd_pnt(double x, double y);
-  bool insd_ellps(const Ellps &El);
+  bool insd_ellps(Ellps &El);
   
   double dst_pnts(double x1, double y1, double x2, double y2);
-  
   double dst_ellps_pnt(double x1, double y1);
  
-  double x_XY(double X, double Y, double dx, double dy, double angle);
-  double y_XY(double X, double Y, double dx, double dy, double angle);
+  double x_XY(double X, double Y);
+  double y_XY(double X, double Y);
     
-  double X_xy(double x, double y, double dx, double dy, double angle);
-  double Y_xy(double x, double y, double dx, double dy, double angle);
+  double X_xy(double x, double y);
+  double Y_xy(double x, double y);
   
   double get_r(double x, double y);
   

@@ -31,10 +31,20 @@ class Geom3
     unsigned int get_label_t() const;
     std::list<Ellps> get_ellps() const;
     
+    double dsX_to_x(double dsx, double dsy, double dx, double dy, double angle);
+    double dsY_to_y(double dsx, double dsy, double dx, double dy, double angle);
+    
+    double x_to_dsX(double x, double y, double dx, double dy, double angle);
+    double y_to_dsY(double x, double y, double dx, double dy, double angle);
+    
+    bool pnt_insd_E(double x, double y, const Ellps E);
+    bool E1_insd_E2(const Ellps & E1, const Ellps & E2);
+  
     double Dist(double a1, double a2, double b1, double b2);
+    double Dist_pnt_E(double x1, double y1, const Ellps &E);
     
     void InitialGeometry(unsigned int i, const std::list<Ellps> &ellpses);
-    void UpdateGeometry(Ellps &elt);
+    void UpdateGeometry(const Ellps &Et);
     bool EmptyGeometry();
 };
 #endif //GEOM3_H
