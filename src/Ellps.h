@@ -11,7 +11,7 @@
  (X,Y) =>(x,y)
  (x/a)^2 +(y/b)^2 = c^2
  (A*k^2+2*B*k*a+C*a^2+2*D*k+2*E*a+F=0) => (displacement, slope) => (x/a)^2 +(y/b)^2 = c^2
- --------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
  */
 class Ellps
 {
@@ -25,19 +25,18 @@ private:
   //angle
   double angl;
   //coefficients
-  double a, b, c2;
+  double a, b;
   //focus F1 (-F, 0), F2(F, 0)
   double F;
 public:
   Ellps(){};
-  Ellps(lrCost Q);  
+  Ellps(lrCost Q);
   //accessory
   double get_d1() const;
   double get_d2() const;
  
   double get_a() const;
   double get_b() const;
-  double get_c2() const;
   
   double get_F() const;
   

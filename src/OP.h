@@ -80,8 +80,8 @@ public:
   void algoFPOP(std::vector<double>& x, std::vector<double>& y, int type, bool test_mode){
     //preprocessing-------------------------------------------------------------
     Sum = vect_Sum(x, y); 
-    double* m = new double[n + 1];        // "globalCost" = m[n] - chpts.size()*penalty
-    m[0] = 0;  
+    double* gCost = new double[n + 1];        // "globalCost" = gCost[n] - chpts.size()*penalty
+    gCost[0] = 0;  
     double** Chpt_k_a = new double*[3];// vectors of best last changepoints, k and a
     for(unsigned int i = 0; i < 3; i++) {Chpt_k_a[i] = new double[n];}
     
@@ -100,19 +100,21 @@ public:
     std::list<GeomX> list_geom;    //list of geometry
     std::list<Ellps> list_Ellps;//list of active ellipses(t-1)
     for (unsigned int t = 0; t < n ; t++){
-      cost = lrCost(t, t, Sum[t], Sum[t+1], m[t]);
+      cost = lrCost(t, t, Sum[t], Sum[t+1], gCost[t]);
       min_val = cost.get_min();              
       kTemp =  cost.get_k();   
       aTemp = cost.get_a(); 
       lbl = t;
       list_Ellps.clear();
-
+      
+      Rcpp::Rcout<<"1. min_val="<< min_val<<" kTemp="<< kTemp<<" aTemp="<< aTemp<<" lbl="<< lbl<<std::endl;
       //First run: searching min------------------------------------------------
       typename std::list<GeomX>::reverse_iterator rit_geom = list_geom.rbegin();
       while(rit_geom!= list_geom.rend()){
         u = rit_geom -> get_label_t(); 
         // Searching: min
-        cost = lrCost(u, t, Sum[u], Sum[t + 1], m[u]);
+        cost = lrCost(u, t, Sum[u], Sum[t + 1], gCost[u]);
+        Rcpp::Rcout<<"2. min_val="<< min_val<<" cost.get_min()="<< cost.get_min()<<std::endl;
         if( min_val >= cost.get_min()){
           lbl = u;
           min_val = cost.get_min();
@@ -120,7 +122,7 @@ public:
           aTemp = cost.get_a();  
         }
         //list of active Ellpss(t-1)
-        cost = lrCost(u, t-1, Sum[u], Sum[t], m[u]);
+        cost = lrCost(u, t-1, Sum[u], Sum[t], gCost[u]);
         list_Ellps.push_back(Ellps(cost));
         ++rit_geom;
       }
@@ -129,8 +131,8 @@ public:
       Chpt_k_a[1][t] = kTemp;     //vector of k
       Chpt_k_a[2][t] = aTemp;     //vector of a
       //new min 
-      m[t + 1] = min_val + penalty;
-      
+      gCost[t + 1] = min_val + penalty;
+      Rcpp::Rcout<<"RES ITER. min_val="<< min_val<<" kTemp="<< kTemp<<" aTemp="<< aTemp<<" lbl="<< lbl<<"gCost[t + 1]=" <<gCost[t + 1] <<std::endl;
       //Initialisation of geometry----------------------------------------------
       geom.InitialGeometry(t, list_Ellps);
       list_geom.push_back(geom);
@@ -139,10 +141,11 @@ public:
       typename std::list<GeomX>::iterator it_geom = list_geom.begin();
       while (it_geom != list_geom.end()){
         lbl = it_geom -> get_label_t();
-        cost = lrCost(lbl, t, Sum[lbl], Sum[t + 1], m[lbl]);
-        mdif = m[t + 1] - m[lbl] - cost.get_min(); //if qit(a,k)> mt+penalty =>PELT
+        cost = lrCost(lbl, t, Sum[lbl], Sum[t + 1], gCost[lbl]);
+        mdif = gCost[t + 1] - cost.get_min(); //if qit(a,k)> mt+penalty =>PELT
+        Rcpp::Rcout<<"mdif="<< mdif<<std::endl;
         //PELT
-        if (mdif <= 0){it_geom = list_geom.erase(it_geom); --it_geom;}
+        if (mdif <= 0){it_geom = list_geom.erase(it_geom); --it_geom;Rcpp::Rcout<<"PELT"<< mdif<<std::endl;}
         //FPOP
         if (mdif > 0){
           it_geom -> UpdateGeometry(Ellps(cost));
@@ -166,13 +169,13 @@ public:
     chpts.pop_back();                
     reverse(kCoef.begin(), kCoef.end());
     reverse(aCoef.begin(), aCoef.end());
-    globalCost = m[n] - penalty * chpts.size();  
+    globalCost = gCost[n] - penalty * chpts.size();  
     //memory--------------------------------------------------------------------
     for(unsigned int i = 0; i < 3; i++) {delete(Chpt_k_a[i]);}
     delete [] Chpt_k_a;
     Chpt_k_a = NULL;
-    delete [] m;
-    m = NULL;
+    delete [] gCost;
+    gCost = NULL;
   }
   //----------------------------------------------------------------------------
 };

@@ -1,17 +1,20 @@
 #include "Ellps.h"
 #include "math.h"
 
+
+#include <Rcpp.h>
+using namespace Rcpp;
 //constructor*******************************************************************
 Ellps::Ellps(lrCost Q)
 {
   double inv1 = Q.get_A()+Q.get_C();
   double inv2 = Q.get_A()*Q.get_C() - Q.get_B()*Q.get_B();
-  double inv3 = Q.get_A()*(Q.get_C()*Q.get_F()-Q.get_E()*Q.get_E()) + Q.get_B()*Q.get_D()*(Q.get_E()-Q.get_F()) + Q.get_D()*Q.get_D()*(Q.get_E()-Q.get_C());
-  
+  double inv3 = Q.get_A()*Q.get_C()*Q.get_F() + 2*Q.get_B()*Q.get_D()*Q.get_E() - Q.get_C()*Q.get_D()*Q.get_D() - Q.get_A()*Q.get_E()*Q.get_E() - Q.get_B()*Q.get_B()*Q.get_F();
+    
   //invariant condition: (theta1^2/C1 + theta2^2/A1 = -F) <=> (A1+C1=inv1) && (A1C1=inv2) && (A1C1F1=inv3) 
   if ((inv2 > 0) && (inv3 != 0) && (inv1*inv3 < 0)){//ellipse condition
-    //A1 =lmbd1; C1=S-lmbd1; F1=inv3/inv2 ; 
-    //a =sqrt(C1); b = sqrt(A1); c = sqtr(-F1/A1C1); angle = atan((A1-A)/B) 
+    //A1 =lmbd1; C1=inv1-lmbd1; F1=inv3/inv2 ; 
+    //a =sqrt(-F1/C1); b = sqrt(-F1/A1); c = 1; angle = atan((A1-A)/B) 
   
     //displacement 
     d1 = (Q.get_B()*Q.get_E() - Q.get_D()*Q.get_C())/inv2;
@@ -27,15 +30,14 @@ Ellps::Ellps(lrCost Q)
     k2 = (lmbd2 - Q.get_A())/Q.get_B();
     angl = atan((lmbd1 - Q.get_A())/Q.get_B());
     
-    //a,b,c
-    a = sqrt((-inv3/inv2)/lmbd1);     
-    b = sqrt((-inv3/inv2)/(inv1 - lmbd1));
-    c2 = (-inv3/inv2)/(lmbd1*(inv1 - lmbd1));
+    //a,b
+    a = sqrt(-(inv3/inv2)/lmbd1);     
+    b = sqrt(-(inv3/inv2)/(inv1 - lmbd1));
     //Focus
-    F = sqrt(a*a -b*b);
-  } else{ d1 = 0; d1 = 0; a = 0; b = 0; c2 = 0; angl = 0; k1 =0; k2 = 0; lmbd1 = 0; lmbd2 = 0; F = 0;}
+    F = sqrt(a*a - b*b);
+  } else{ d1 = 0; d1 = 0; a = 0; b = 0; angl = 0; k1 =0; k2 = 0; lmbd1 = 0; lmbd2 = 0; F = 0;}
+  Rcpp::Rcout<<" A="<< Q.get_A()<<" B="<< Q.get_B()<<" C="<< Q.get_C()<<" D="<< Q.get_D()<<" E="<< Q.get_E()<<" F="<< Q.get_F()<<" a="<< a<<" b="<< b<<" d1="<< d1<<" d2="<<d2<<" k1="<< k1<<" k2="<< k2<<std::endl;
 }
-
 //accessory*********************************************************************
 double Ellps::get_d1() const {return d1;}
 double Ellps::get_d2() const {return d2;}
@@ -49,12 +51,10 @@ double Ellps::get_lmbd2() const {return lmbd2;}
 
 double Ellps::get_a() const {return a;}
 double Ellps::get_b() const {return b;}
-double Ellps::get_c2() const {return c2;}
 double Ellps::get_F() const {return F;}
 
 //dist_pnts********************************************************************
 double Ellps::dst_pnts(double x1, double y1, double x2, double y2){return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));}
-
 
 //dst_ellps_pnt*****************************************************************
 //|F1P|+|F2P| = 2(a+d) => d = (|F1P|+|F2P|)/2 -a
@@ -62,7 +62,7 @@ double Ellps::dst_ellps_pnt(double x1, double y1){ return  (abs((dst_pnts(x1,y1,
 
 
 //insd_pnt********************************************************************
-bool  Ellps::insd_pnt(double x, double y){ if ((x*x/a*a + y*y/b*b) < c2) {return true;} else {return false;}}
+bool  Ellps::insd_pnt(double x, double y){ if ((x*x/a*a + y*y/b*b) < 1) {return true;} else {return false;}}
 
 //get_r*************************************************************************
 double Ellps::get_r(double x, double y){      //r = |2rx-x0|*|2ry-y0|/sqrt((2rx-x0)^2sin^2(phi) + (2ry-y0)^2cos^2(phi)), x0,y0 = (0,0)

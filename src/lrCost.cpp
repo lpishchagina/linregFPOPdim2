@@ -37,9 +37,8 @@ lrCost::lrCost(unsigned int i, unsigned int t,double* Si1, double* St, double mi
   E = Si1[2] - St[2];
   F = St[4] - Si1[4] + mi1p;
   
-  value_min = A*k*k + 2*a*k*B + C*a*a + + 2*k*D + 2*a*E + F + mi1p;
+  value_min = A*k*k + 2*a*k*B + C*a*a + 2*k*D + 2*a*E + F;
   /*comment: Fun(a,k) = 0, Fun(k,a) = A*k^2+2*B*k*a+C*a^2+2*D*k+2*E*a+(F-value_min) = 0 */
-  F = F-value_min;
 }
 //accessory*********************************************************************
 unsigned int lrCost::get_cnst()const{return cnst;}

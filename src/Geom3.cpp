@@ -38,7 +38,7 @@ double Geom3::Dist(double a1, double a2, double b1, double b2){ return sqrt((a1 
 
 //pnt_insd_E********************************************************************
 bool Geom3::pnt_insd_E(double x, double y, const Ellps E){ 
-  if ((x*x/E.get_a()*E.get_a() + y*y/E.get_b()*E.get_b()) < E.get_c2()) { return true;} 
+  if ((x*x/E.get_a()*E.get_a() + y*y/E.get_b()*E.get_b()) < 1) { return true;} 
   else {return false;}
 }
 

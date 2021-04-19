@@ -15,6 +15,7 @@
 #' @examples
 #' Data1 <- lrdata_gen2D(n = 10, chpts = NULL, xmean = 0, kCoef = 2, aCoef = 1, noise = 1)
 #' Data2 <- lrdata_gen2D(n = 10, chpts = c(5), kCoef = c(10,20), aCoef = c(1,10), noise = 1)
+#' lrFPOP2D(Data1[1,], Data1[2,],2*log(10), 0)
 
 lrdata_gen2D <- function(n, chpts = NULL, xmean = 0, kCoef = seq(from = 1, to = length(chps)+1, by = 1), aCoef = seq(from = 1, to = length(chps)+1, by = 1), noise = 1)
 {
