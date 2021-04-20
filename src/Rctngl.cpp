@@ -36,8 +36,11 @@ bool Rctngl::pnt_insd_trngl(double x, double y, double a1, double a2, double b1,
 }
 
 //insd_pnt********************************************************************
-bool  Rctngl::insd_pnt(double x, double y){ if ((x*x/a*a + y*y/b*b) < 1) {return true;} else {return false;}}
-
+bool  Rctngl::insd_pnt(double x, double y){
+  //we divide the rectangle (1,2,3,4)into 2 triangles (1,2,3) and (1,3,4) 
+  if (pnt_insd_trngl( x, y, x1, y1, x2, y2, x3, y3)){return true;}
+  if (pnt_insd_trngl( x,y, x1, y1, x3, y3, x4, y4)){return true;}
+}
 //dist_pnts********************************************************************
 double Rctngl::dst_pnts(double a1, double b1, double a2, double b2){return sqrt((a1-a2)*(a1-a2) + (b1-b2)*(b1-b2));}
 
@@ -51,9 +54,7 @@ double Rctngl::get_r(double x, double y, const Ellps &E){      //r = |2rx-x0|*|2
 //EmptyIntersection*************************************************************
 bool Rctngl::EmptyIntersection(const Ellps &E){
   //Ellipse center inside rectangle => intersection
-  //we divide the rectangle (1,2,3,4)into 2 triangles (1,2,3) and (1,3,4) 
-  if (pnt_insd_trngl( E.get_d1(), E.get_d2(), x1, y1, x2, y2, x3, y3)){return false;}
-  if (pnt_insd_trngl( E.get_d1(), E.get_d2(), x1, y1, x3, y3, x4, y4)){return false;}
+  if (insd_pnt(E.get_d1(), E.get_d2())) {return false;}
   
   //Ellipse center outside rectangle
   //ERROR!!!!переделать.. надо искать кратчайшие расстояния до граней
