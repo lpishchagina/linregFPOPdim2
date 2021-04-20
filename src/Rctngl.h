@@ -49,6 +49,7 @@ public:
   
   bool insd_pnt(double x, double y);
   bool pnt_insd_trngl(double x, double y, double a1, double b1, double a2, double b2, double c1, double c2);
+  double get_r(double x, double y, const Ellps &E);
   
   bool EmptyIntersection(const Ellps &E);
   
