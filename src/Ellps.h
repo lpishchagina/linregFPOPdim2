@@ -2,6 +2,8 @@
 #define ELLPS_H
 
 #include "lrCost.h"
+#include "Mat2x2.h"
+
 #include <vector>
 /*
  Class Ellps
@@ -26,11 +28,14 @@ private:
   double angl;
   //coefficients
   double a, b;
-  //focus F1 (-F, 0), F2(F, 0)
-  double F;
+  //focus Fs1 (-Fs, 0), Fs2(Fs, 0)
+  double Fs;
+  //Matrix (A,B//B,C)
+  Mat2X2 Sigma;
+  
 public:
   Ellps(){};
-  Ellps(lrCost Q);
+  Ellps(lrCost Q, double r2);
   //accessory
   double get_d1() const;
   double get_d2() const;
@@ -38,7 +43,7 @@ public:
   double get_a() const;
   double get_b() const;
   
-  double get_F() const;
+  double get_Fs() const;
   
   double get_lmbd1() const;
   double get_lmbd2() const;
@@ -47,11 +52,10 @@ public:
   double get_k2() const;
   double get_angl() const;
   
-  bool insd_pnt(double x, double y);
-  bool insd_ellps(Ellps &El);
+  Mat2X2 get_Sigma() const;
   
+  bool insd_pnt(double x, double y);
   double dst_pnts(double x1, double y1, double x2, double y2);
-  double dst_ellps_pnt(double x1, double y1);
  
   double x_XY(double X, double Y);
   double y_XY(double X, double Y);
@@ -61,6 +65,7 @@ public:
   
   double get_r(double x, double y);
   
+  int testInter(const Ellps &E);
 }; 
 
 #endif //ELLPS_H

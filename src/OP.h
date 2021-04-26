@@ -100,7 +100,7 @@ public:
     std::list<GeomX> list_geom;    //list of geometry
     std::list<Ellps> list_Ellps;//list of active ellipses(t-1)
     for (unsigned int t = 0; t < n ; t++){
-      cost = lrCost(t, t, Sum[t], Sum[t+1], gCost[t]);
+      cost = lrCost(t, t, Sum[t], Sum[t+1], gCost[t]);//min_val tt = INFINITY=> t nne peut pas candidate?
       min_val = cost.get_min();              
       kTemp =  cost.get_k();   
       aTemp = cost.get_a(); 
@@ -123,7 +123,8 @@ public:
         }
         //list of active Ellpss(t-1)
         cost = lrCost(u, t-1, Sum[u], Sum[t], gCost[u]);
-        list_Ellps.push_back(Ellps(cost));
+        mdif = gCost[t] - gCost[u];
+        list_Ellps.push_back(Ellps(cost, mdif));
         ++rit_geom;
       }
       //best last changepoints and means
@@ -132,7 +133,9 @@ public:
       Chpt_k_a[2][t] = aTemp;     //vector of a
       //new min 
       gCost[t + 1] = min_val + penalty;
+      
       Rcpp::Rcout<<"RES ITER. min_val="<< min_val<<" kTemp="<< kTemp<<" aTemp="<< aTemp<<" lbl="<< lbl<<"gCost[t + 1]=" <<gCost[t + 1] <<std::endl;
+      
       //Initialisation of geometry----------------------------------------------
       geom.InitialGeometry(t, list_Ellps);
       list_geom.push_back(geom);
@@ -142,13 +145,15 @@ public:
       while (it_geom != list_geom.end()){
         lbl = it_geom -> get_label_t();
         cost = lrCost(lbl, t, Sum[lbl], Sum[t + 1], gCost[lbl]);
-        mdif = gCost[t + 1] - cost.get_min(); //if qit(a,k)> mt+penalty =>PELT
+        mdif = gCost[t + 1] - gCost[lbl]; //if qit(a,k)> mt+penalty =>PELT
+        
         Rcpp::Rcout<<"mdif="<< mdif<<std::endl;
+        
         //PELT
         if (mdif <= 0){it_geom = list_geom.erase(it_geom); --it_geom;Rcpp::Rcout<<"PELT"<< mdif<<std::endl;}
         //FPOP
         if (mdif > 0){
-          it_geom -> UpdateGeometry(Ellps(cost));
+          it_geom -> UpdateGeometry(Ellps(cost, mdif));
           if (it_geom -> EmptyGeometry()){it_geom = list_geom.erase(it_geom);--it_geom;}
           else {if (test_mode == true && (type == 2 || type == 3)){ test_file << it_geom ->get_label_t() << " "<< it_geom ->get_ellps().size() << " ";}}
         }//else

@@ -8,6 +8,7 @@
 
 #include "Ellps.h"
 #include "lrCost.h"
+#include "Mat2x2.h"
 
 //Class Geom3
 //------------------------------------------------------------------------------
@@ -38,11 +39,11 @@ class Geom3
     double y_to_dsY(double x, double y, double dx, double dy, double angle);
     
     bool pnt_insd_E(double x, double y, const Ellps E);
-    bool E1_insd_E2(const Ellps & E1, const Ellps & E2);
-  
-    double Dist(double a1, double a2, double b1, double b2);
-    double Dist_pnt_E(double x1, double y1, const Ellps &E);
     
+    double Dist(double a1, double a2, double b1, double b2);
+    
+    int testIntersection(const Ellps &E1,const Ellps &E2);
+   
     void InitialGeometry(unsigned int i, const std::list<Ellps> &ellpses);
     void UpdateGeometry(const Ellps &Et);
     bool EmptyGeometry();

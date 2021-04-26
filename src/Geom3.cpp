@@ -42,33 +42,6 @@ bool Geom3::pnt_insd_E(double x, double y, const Ellps E){
   else {return false;}
 }
 
-//Dist_pnt_E********************************************************************
-double Geom3::Dist_pnt_E(double x1, double y1,const Ellps &E){
-  { return  (abs((Dist(x1,y1,(-E.get_F()),0) + Dist(x1,y1,E.get_F(),0))/2 - E.get_a()));}
-}
-
-//E1_insd_E2********************************************************************
-bool  Geom3::E1_insd_E2(const Ellps & E1, const Ellps & E2){
-  //(-a,0) 
-  double X = x_to_dsX((-E2.get_a()), 0, E2.get_d1(), E2.get_d2(), E2.get_angl());
-  double Y = y_to_dsY((-E2.get_a()), 0, E2.get_d1(), E2.get_d2(), E2.get_angl());
-  if (!pnt_insd_E(dsX_to_x(X,Y, E1.get_d1(), E1.get_d2(), E1.get_angl()),dsY_to_y(X,Y, E1.get_d1(), E1.get_d2(), E1.get_angl()), E2)){return false;}
-  //(a,0) 
-  X = x_to_dsX((E2.get_a()), 0, E2.get_d1(), E2.get_d2(), E2.get_angl());
-  Y = y_to_dsY((E2.get_a()), 0, E2.get_d1(), E2.get_d2(), E2.get_angl());
-  if (!pnt_insd_E(dsX_to_x(X,Y, E1.get_d1(), E1.get_d2(), E1.get_angl()),dsY_to_y(X,Y, E1.get_d1(), E1.get_d2(), E1.get_angl()), E2)){return false;}
-  //(0,-b) 
-  X = x_to_dsX(0, (-E2.get_b()), E2.get_d1(), E2.get_d2(), E2.get_angl());
-  Y = y_to_dsY(0, (-E2.get_b()), E2.get_d1(), E2.get_d2(), E2.get_angl());
-  if (!pnt_insd_E(dsX_to_x(X,Y, E1.get_d1(), E1.get_d2(), E1.get_angl()),dsY_to_y(X,Y, E1.get_d1(), E1.get_d2(), E1.get_angl()), E2)) {return false;}
-  //(0,b) 
-  X = x_to_dsX(0, (E2.get_a()), E2.get_d1(), E2.get_d2(), E2.get_angl());
-  Y = y_to_dsY(0, (E2.get_a()), E2.get_d1(), E2.get_d2(), E2.get_angl());
-  if (!pnt_insd_E(dsX_to_x(X,Y, E1.get_d1(), E1.get_d2(), E1.get_angl()),dsY_to_y(X,Y, E1.get_d1(), E1.get_d2(), E1.get_angl()), E2)){return false;}
-  
-  return true;
-}
-
 //InitialGeometry***************************************************************
 void Geom3::InitialGeometry(unsigned int i, const std::list<Ellps> &ellpses){
   label_t = i;
@@ -81,7 +54,7 @@ void Geom3::InitialGeometry(unsigned int i, const std::list<Ellps> &ellpses){
 void Geom3::UpdateGeometry (const Ellps &Et){
   double d_Ei_cEt, d_Et_cEi;// distance from first ellipse to center  of second ellipse
   std::list<Ellps>::iterator Ei = ellps.begin();
-  
+  /*
   while( Ei != ellps.end()){
     //if Et center inside (*Ei)
     if (pnt_insd_E(dsX_to_x(Et.get_d1(), Et.get_d2(), (*Ei).get_d1(), (*Ei).get_d2(),(*Ei).get_angl()), dsY_to_y(Et.get_d1(),Et.get_d2(),(*Ei).get_d1(), (*Ei).get_d2(), (*Ei).get_angl()), (*Ei))){
@@ -97,17 +70,35 @@ void Geom3::UpdateGeometry (const Ellps &Et){
         { ++Ei;}// => exist intersection next *Ei   
       //(*Ei)center outside Et and Et center outside (*Ei)
       else{  
-        d_Ei_cEt = Dist_pnt_E( dsX_to_x(Et.get_d1(), Et.get_d2(),(*Ei).get_d1(),(*Ei).get_d2(), (*Ei).get_angl()), dsY_to_y(Et.get_d1(), Et.get_d2(),(*Ei).get_d1(),(*Ei).get_d2(), (*Ei).get_angl()), (*Ei));
-        d_Et_cEi = Dist_pnt_E(dsX_to_x((*Ei).get_d1(), (*Ei).get_d2(),Et.get_d1(),Et.get_d2(), Et.get_angl()), dsY_to_y((*Ei).get_d1(), (*Ei).get_d2(),Et.get_d1(), Et.get_d2(), Et.get_angl()), Et);
-        
-        if (Dist(Et.get_d1(),Et.get_d2(),(*Ei).get_d1(),(*Ei).get_d2()) > d_Ei_cEt + d_Et_cEi) {Ei = ellps.erase(Ei);} //=>empty_intersection
+     
+        if (condition) {Ei = ellps.erase(Ei);} //=>empty_intersection
         else{++Ei;} // => exist intersection next *Ei 
      }
     }
-  }
+  }*/
 } 
 
 //EmptyGeometry*****************************************************************
 bool Geom3::EmptyGeometry() {return fl_empty;}
 
 //******************************************************************************
+
+int Geom3::testIntersection(const Ellps &E1,const Ellps &E2)
+{
+  int res = E1.testInter(E2);
+  /*
+  //Ellipse E1
+  Mat2X2 Sig1 = E1.get_Sigma();
+  double* c1 = new double[2];
+  c1[0] = E1.get_d1();
+  c1[1] = E1.get_d2();
+  //Ellipse E2
+  Mat2X2 Sig2 = E2.get_Sigma();
+  double* c2 = new double[2];
+  c2[0] = E2.get_d1();
+  c2[1] = E2.get_d2();
+  
+  int res; //  if isn't intersection res = 2, else res = 0, 1 
+  
+   */
+}
