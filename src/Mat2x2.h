@@ -37,7 +37,7 @@ public:
   double Trace(); 
   
   double** get_mat() const;
-  double get_element(unsigned int i, unsigned int j) const;
+  double get_el(unsigned int i, unsigned int j) const;
 };
 
 #endif // MAT2X2_H

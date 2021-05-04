@@ -19,7 +19,7 @@ class Ellps
 {
 private:
   //displacement (x0,y0)=>(0,0)  
-  double d1, d2;
+  double x0, y0;
   //roots lmbd1>=lmbd2
   double lmbd1,lmbd2;
   //slope
@@ -37,8 +37,8 @@ public:
   Ellps(){};
   Ellps(lrCost Q, double r2);
   //accessory
-  double get_d1() const;
-  double get_d2() const;
+  double get_x0() const;
+  double get_y0() const;
  
   double get_a() const;
   double get_b() const;
@@ -65,7 +65,7 @@ public:
   
   double get_r(double x, double y);
   
-  int testInter(const Ellps &E);
+  //int testInter(const Ellps &E);
 }; 
 
 #endif //ELLPS_H

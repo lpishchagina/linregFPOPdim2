@@ -42,7 +42,7 @@ class Geom3
     
     double Dist(double a1, double a2, double b1, double b2);
     
-    int testIntersection(const Ellps &E1,const Ellps &E2);
+    int filtKalman(double c1, double c2, const Mat2X2 &A, double d1, double d2, const Mat2X2 &B);
    
     void InitialGeometry(unsigned int i, const std::list<Ellps> &ellpses);
     void UpdateGeometry(const Ellps &Et);

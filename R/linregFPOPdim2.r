@@ -44,7 +44,7 @@ lrdata_gen2D <- function(n, chpts = NULL, xmean = 0, kCoef = seq(from = 1, to = 
   k <-  rep(kCoef, InttT)
   a <-  rep(aCoef, InttT)
   e <- rnorm(n, 0, noise)
-  data[2,] <- k* data[1,]+a
+  data[2,] <- k* data[1,] + a + e
   return(data)
 }
 

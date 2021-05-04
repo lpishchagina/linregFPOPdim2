@@ -131,5 +131,5 @@ Mat2X2  Mat2X2::Trans(){
 double  Mat2X2::Trace(){return mat[0][0] +m at[1][1];}
 //******************************************************************************
 double** Mat2X2::get_mat() const {return mat;} 
-double Mat2X2::get_element(unsigned int i, unsigned int j) const {return mat[i][j];}
+double Mat2X2::get_el(unsigned int i, unsigned int j) const {return mat[i][j];}
 
