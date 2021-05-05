@@ -56,33 +56,23 @@ void Geom3::UpdateGeometry (const Ellps &Et){
   std::list<Ellps>::iterator Ei = ellps.begin();
   /*
   while( Ei != ellps.end()){
-    //if Et center inside (*Ei)
-    if (pnt_insd_E(dsX_to_x(Et.get_d1(), Et.get_d2(), (*Ei).get_d1(), (*Ei).get_d2(),(*Ei).get_angl()), dsY_to_y(Et.get_d1(),Et.get_d2(),(*Ei).get_d1(), (*Ei).get_d2(), (*Ei).get_angl()), (*Ei))){
-      if (E1_insd_E2(Et, (*Ei))){
-        fl_empty = true;
-        return;
-      }
-      else{++Ei;}     // => exist only intersection next *Ei 
-    }
-    else{
-      //if (*Ei) center inside Et
-      if (pnt_insd_E(dsX_to_x((*Ei).get_d1(), (*Ei).get_d2(), Et.get_d1(), Et.get_d2(), Et.get_angl()), dsY_to_y((*Ei).get_d1(), (*Ei).get_d2(), Et.get_d1(), Et.get_d2(), Et.get_angl()), Et))
-        { ++Ei;}// => exist intersection next *Ei   
-      //(*Ei)center outside Et and Et center outside (*Ei)
-      else{  
-     
-        if (condition) {Ei = ellps.erase(Ei);} //=>empty_intersection
-        else{++Ei;} // => exist intersection next *Ei 
-     }
-    }
-  }*/
+   if (filtKalman(Et.get_x0(), Et.get_y0(), Et.get_Sigma(), Ei.get_x0(), Ei.get_y0(), Ei.get_Sigma()) ==2) {Ei = ellps.erase(Ei);} 
+   else{
+     if (condition excl) {
+       fl_empty = true;
+       return;
+     } 
+    else{++Ei;} // => exist intersection next *Ei 
+   }
+  }
+  */
 } 
 
 //EmptyGeometry*****************************************************************
 bool Geom3::EmptyGeometry() {return fl_empty;}
 
 //******************************************************************************
-int Geom3::filtKalman(double c1, double c2, const Mat2X2 &A, double d1, double d2, const Mat2X2 &B)
+unsigned int Geom3::filtKalman(double c1, double c2, const Mat2X2 &A, double d1, double d2, const Mat2X2 &B)
 { 
   // E(lambda) = lambda*A +(1-lambda)*B
   //polynome: det(E(lambda)) = k2*lambda^2 + k1*lambda +k0
@@ -111,39 +101,71 @@ int Geom3::filtKalman(double c1, double c2, const Mat2X2 &A, double d1, double d
   
   /*Shturm sequence: f_1 = f' , fi = -(f_(i-2) mod f_(i-1)), i = 2,3 
   det(E(lambda)) *K(lambda) = C3*lambda^3 + C2*lambda^2 + C1*lambda + C0
-  C0 = k0; C1 = k1 - z1; C2 = k2 + z2 - z1; C3 = z1; CC0 = C1*C2/(9*C3) - C0; CC1 =  2*C2*C2/(9*C3)  - 2*C1/3;
+   */
+  double C0 = k0; 
+  double C1 = k1 - z1; 
+  double C2 = k2 + z2 - z1; 
+  double C3 = z1; 
+  double CC0 = C1*C2/(9*C3) - C0; 
+  double CC1 =  2*C2*C2/(9*C3)  - 2*C1/3;
   
-  functions: lambda = 0, lambda = 1,
-  f_0 = C0;
-  f_1 = C3+C2+C1+C0;
-  f1_0 = C1;
-  f1_1 = 3*C3 +2*C2 +C1;
-  f2_0 = CC0;
-  f2_1 = CC1 +CC0;
-  f3_01 = CC0*(2*C2-(3*C3*CC0)/C1)/CC1 - C1; 
- */ 
-  double* Sh_f0 = new double [4];
-  double* Sh_f1 = new double [4];
-  Sh_f0[0] = k0;
-  Sh_f1[0] = k2 + z2 + k1 - z1 + k0;
-  Sh_f0[1] = k1 - z1;
-  Sh_f1[1] = 2*(k2 + z2) + k1;
-  Sh_f0[2] = (k1 - z1)*(k2 + z2 - z1)/(9*z1) - k0;
-  Sh_f1[2] = 2*(k2 + z2 - z1)*(k2 + z2 - z1)/(9*z1)  - 2*(k1 - z1)/3 + (k1 - z1)*(k2 + z2 - z1)/(9*z1) - k0;
-  Sh_f0[3] = ((k1 - z1)*(k2 + z2 - z1)/(9*z1) - k0) * (2*(k2 + z2 - z1)-(3*z1*((k1 - z1)*(k2 + z2 - z1)/(9*z1) - k0))/(k1 - z1))/(2*(k2 + z2 - z1)*(k2 + z2 - z1)/(9*z1)  - 2*(k1 - z1)/3) - (k1 - z1); 
-  Sh_f1[3] =  Sh_f0[3];
- 
-  int count0 = 0;
-  int count1 = 0;
+  unsigned int count = seqShturm(0, C0, C1, C2, C3,CC0, CC1) - seqShturm(1, C0, C1, C2, C3,CC0, CC1);
+  return count;
+}
+//------------------------------------------------------------------------------
+unsigned int Geom3::seqShturm(double lmb, double C0, double C1, double C2, double C3,double CC0,double CC1)
+{
+  double* Sh_f = new double [4];
+  Sh_f[0] = C3*lmb*lmb*lmb + C2*lmb*lmb + C1* lmb +C0;
+  Sh_f[1] = 3*C3*lmb*lmb +2*C2*lmb + C1;
+  Sh_f[2] = CC1*lmb + CC0;
+  Sh_f[3] = CC0/CC1* (2*C2 - 3*C3*CC0/C1) - C1;
+  unsigned int count = 0;
   //count sign
   for (unsigned int i = 0; i < 3 ; i++){
-    if (Sh_f0[i] < 0 && Sh_f0[i+1] > 0 || Sh_f0[i] > 0 && Sh_f0[i+1] < 0) {count0++;}
-    if (Sh_f1[i] < 0 && Sh_f1[i+1] > 0 || Sh_f1[i] > 0 && Sh_f1[i+1] < 0) {count1++;}
+    if (Sh_f[i] < 0 && Sh_f[i+1] > 0 || Sh_f[i] > 0 && Sh_f[i+1] < 0) {count++;}
   }
-  //memory  
-  delete []Sh_f0;
-  delete []Sh_f1;
-  Sh_f0 = NULL;
-  Sh_f1 = NULL;
-  return (count0-count1);  
+  //memory
+  delete []Sh_f;
+  Sh_f = NULL;
+  return count;
 }
+//#Stock########################################################################
+
+/*
+ functions: lambda = 0, lambda = 1,
+ f_0 = C0;
+ f_1 = C3+C2+C1+C0;
+ f1_0 = C1;
+ f1_1 = 3*C3 +2*C2 +C1;
+ f2_0 = CC0;
+ f2_1 = CC1 +CC0;
+ f3_01 = CC0*(2*C2-(3*C3*CC0)/C1)/CC1 - C1; 
+ */
+/*
+ double* Sh_f0 = new double [4];
+ double* Sh_f1 = new double [4];
+ Sh_f0[0] = k0;
+ Sh_f1[0] = k2 + z2 + k1 - z1 + k0;
+ Sh_f0[1] = k1 - z1;
+ Sh_f1[1] = 2*(k2 + z2) + k1;
+ Sh_f0[2] = (k1 - z1)*(k2 + z2 - z1)/(9*z1) - k0;
+ Sh_f1[2] = 2*(k2 + z2 - z1)*(k2 + z2 - z1)/(9*z1)  - 2*(k1 - z1)/3 + (k1 - z1)*(k2 + z2 - z1)/(9*z1) - k0;
+ Sh_f0[3] = ((k1 - z1)*(k2 + z2 - z1)/(9*z1) - k0) * (2*(k2 + z2 - z1)-(3*z1*((k1 - z1)*(k2 + z2 - z1)/(9*z1) - k0))/(k1 - z1))/(2*(k2 + z2 - z1)*(k2 + z2 - z1)/(9*z1)  - 2*(k1 - z1)/3) - (k1 - z1); 
+ Sh_f1[3] =  Sh_f0[3];
+ unsigned int count0 = 0;
+ unsigned int count1 = 0;
+ 
+ //count sign
+ for (unsigned int i = 0; i < 3 ; i++){
+ if (Sh_f0[i] < 0 && Sh_f0[i+1] > 0 || Sh_f0[i] > 0 && Sh_f0[i+1] < 0) {count0++;}
+ if (Sh_f1[i] < 0 && Sh_f1[i+1] > 0 || Sh_f1[i] > 0 && Sh_f1[i+1] < 0) {count1++;}
+ }
+ //memory  
+ delete []Sh_f0;
+ delete []Sh_f1;
+ Sh_f0 = NULL;
+ Sh_f1 = NULL;
+ return (count0-count1); 
+ */
+//##############################################################################
