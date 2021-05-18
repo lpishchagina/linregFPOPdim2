@@ -40,18 +40,18 @@ lrCost::lrCost(unsigned int i, unsigned int t,double* Si1, double* St, double mi
   if (i == t){ value_min = INFINITY;} else { value_min = A*k*k + 2*a*k*B + C*a*a + 2*k*D + 2*a*E + F + mi1p;}
 }
 //accessory*********************************************************************
-unsigned int lrCost::get_cnst()const{return cnst;}
-double lrCost::get_mi1p()const{return mi1p;}
+unsigned int lrCost::g_cnst()const{return cnst;}
+double lrCost::g_mi1p()const{return mi1p;}
 
-double lrCost::get_k()const{return k;}
-double lrCost::get_a()const{return a;}
+double lrCost::g_k()const{return k;}
+double lrCost::g_a()const{return a;}
 
-double lrCost::get_A()const{return A;}
-double lrCost::get_B()const{return B;}
-double lrCost::get_C()const{return C;}
-double lrCost::get_D()const{return D;}
-double lrCost::get_E()const{return E;}
-double lrCost::get_F()const{return F;}
+double lrCost::g_A()const{return A;}
+double lrCost::g_B()const{return B;}
+double lrCost::g_C()const{return C;}
+double lrCost::g_D()const{return D;}
+double lrCost::g_E()const{return E;}
+double lrCost::g_F()const{return F;}
 
-double lrCost::get_min()const{return value_min;}
+double lrCost::g_min()const{return value_min;}
 //******************************************************************************

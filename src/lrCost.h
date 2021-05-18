@@ -34,20 +34,20 @@ public:
   lrCost(){};
   lrCost(unsigned int i, unsigned int t, double* Si1, double* St, double mi_1pen);//S = vector of sum xy,x,y,x2,y2
   //accessory
-  double get_A() const;
-  double get_B() const;
-  double get_C() const;
-  double get_D() const;
-  double get_E() const;
-  double get_F() const;
+  double g_A() const;
+  double g_B() const;
+  double g_C() const;
+  double g_D() const;
+  double g_E() const;
+  double g_F() const;
   
-  unsigned int get_cnst() const;
-  double get_mi1p() const;
+  unsigned int g_cnst() const;
+  double g_mi1p() const;
   
-  double get_k() const;
-  double get_a() const;
+  double g_k() const;
+  double g_a() const;
   
-  double get_min() const;
+  double g_min() const;
 };
 
 #endif // LRCOST_H

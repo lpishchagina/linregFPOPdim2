@@ -14,8 +14,8 @@
 //------------------------------------------------------------------------------
 //Description of geometry "Geom3": 
 //Geometry for FPOP-Algorithm in 2-dimension. 
-//Parameters of geometry:"label_t" - moment of time, "ellpst1" - list of ellipses(t-1)
-//The updated geometry is a ellipse that approximates (ellipse at the moment t) minus (list of ellpst1) .
+//Parameters of geometry:"label_t" - moment of time, "ellps" - list of ellipses(t-1)
+//The updated geometry is a ellipse that approximates (ellipse at the moment t) minus (list of ellps) .
 //Check for emptiness - Points extrem inside Ellipse_t. 
 //------------------------------------------------------------------------------
 class Geom3
@@ -32,18 +32,12 @@ class Geom3
     unsigned int get_label_t() const;
     std::list<Ellps> get_ellps() const;
     
-    double dsX_to_x(double dsx, double dsy, double dx, double dy, double angle);
-    double dsY_to_y(double dsx, double dsy, double dx, double dy, double angle);
+    unsigned int InterKalman(double c1, double c2, const double* &A, double d1, double d2, const double* &B);
+    unsigned int ExclKalman(double c1, double c2, const double* &A, double d1, double d2, const double* &B);
+    unsigned int seqShturm(double l, double C0, double C1, double C2, double C3);
     
-    double x_to_dsX(double x, double y, double dx, double dy, double angle);
-    double y_to_dsY(double x, double y, double dx, double dy, double angle);
-    
-    bool pnt_insd_E(double x, double y, const Ellps E);
-    
-    double Dist(double a1, double a2, double b1, double b2);
-    
-    unsigned int filtKalman(double c1, double c2, const Mat2X2 &A, double d1, double d2, const Mat2X2 &B);
-    unsigned int seqShturm(double lmb, double C0, double C1, double C2, double C3,double CC0,double CC1);
+//    double* eigenValues(const Mat2X2 &A, const Mat2X2 &B);
+   
    
     void InitialGeometry(unsigned int i, const std::list<Ellps> &ellpses);
     void UpdateGeometry(const Ellps &Et);

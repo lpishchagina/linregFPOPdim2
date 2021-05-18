@@ -25,23 +25,187 @@ Geom3::Geom3(unsigned  int t){
 unsigned int Geom3::get_label_t() const {return label_t;}
 std::list<Ellps> Geom3::get_ellps()const {return ellps;}
 
-//(dsX,dsY)- Descart coord, (x,y) - modification********************************
-//from decart(x,y) to modif (X,Y)
-double  Geom3::dsX_to_x(double dsx, double dsy, double dx, double dy, double angle){return (dsx - dx)*cos(angle) + (dsy - dy)*sin(angle);}
-double  Geom3::dsY_to_y(double dsx, double dsy, double dx, double dy, double angle){return -(dsx - dx)*sin(angle) + (dsy - dy)*cos(angle);}
-//from modif (X,Y) to decart(x,y) 
-double  Geom3::x_to_dsX(double x, double y, double dx, double dy, double angle){return x*cos(angle) - y*sin(angle) + dx;}
-double  Geom3::y_to_dsY(double x, double y, double dx, double dy, double angle){return x*sin(angle) + y*cos(angle) + dy;}
+//EmptyGeometry*****************************************************************
+bool Geom3::EmptyGeometry() {return fl_empty;}
 
-//Dist pnt_pnt******************************************************************
-double Geom3::Dist(double a1, double a2, double b1, double b2){ return sqrt((a1 - b1)*(a1 - b1) +(a2 - b2)*(a2 - b2));}
-
-//pnt_insd_E********************************************************************
-bool Geom3::pnt_insd_E(double x, double y, const Ellps E){ 
-  if ((x*x/E.get_a()*E.get_a() + y*y/E.get_b()*E.get_b()) < 1) { return true;} 
-  else {return false;}
+//seqShturm*********************************************************************
+/* INPUT : l -  specified value
+ * C0,C1,C2,C3 - coefficient of equation f(x) = C3*x^3+C2*x^2+C1*x+C0  
+ * 
+ * OUTPUT : The function returns the number of changes of signs in the Shturm sequence at the specified value "l"
+ */
+unsigned int Geom3::seqShturm(double l, double C0, double C1, double C2, double C3){
+  /*comment------------------------------------------------
+   * Shturm sequence
+   * f(l) = C3*l^3+C2*l^2+C1*l+C0
+   * f1(l) = f'(l) =3*C3*l^2+2*C2*l+C1
+   * f2(l) = C5*l + C4
+   * f3(l) = (C4/C5)*(2*C2 - 3*C3*C4/C1) - C1
+   * when 
+   * C4 = ((1/9)*(C1*C2)/C3 - C0)
+   * C5 = ((2/9)*(C2*C2/C3) - (2/3)*C1)
+   */
+  double C4 = (1/9)*(C1*C2)/C3 - C0;
+  double C5 = (2/9)*(C2*C2)/C3 - (2/3)*C1;
+  
+  /*comment------------------------------------------------
+   * Values of Shturm sequence
+   * Sh_f = (f(l),f1(l),f2(l), f3(l))
+   */
+  double* Sh_f = new double [4];
+  
+  Sh_f[0] = C3*l*l*l + C2*l*l + C1*l + C0;
+  Sh_f[1] = 3*C3*l*l + 2*C2*l + C1;
+  Sh_f[2] = C5*l + C4;
+  Sh_f[3] = C4/C5* (2*C2 - 3*C3*C4/C1) - C1;
+  
+  /*comment------------------------------------------------
+   * count - number of changes of signs in the Shturm sequence 'Sh_f'
+   */
+  unsigned int count = 0;
+  for (unsigned int i = 0; i < 3 ; i++){
+    if (Sh_f[i] < 0 && Sh_f[i+1] > 0 || Sh_f[i] > 0 && Sh_f[i+1] < 0) {count++;}
+  }
+  /*memory cleaning-------------------------------------*/
+  delete []Sh_f;
+  Sh_f = NULL;
+  
+  return count;
 }
 
+//InterKalman*********************************************************************
+/* INPUT : parameters of 2 ellipses:
+ * 1 : (c1, c2) -center (x0,y0), A -  M-values of matrix (a11,a12, a12,a22)
+ * 2 : (d1, d2) -center (x0,y0), B -  M-values of matrix (b11,b12, b12,b22)
+ * OUTPUT : The function returns the number of roots of the Kalman filter
+ * NOTE : if roots = 2 => exist intersection
+ */
+unsigned int Geom3::InterKalman(double c1, double c2, const double* &A, double d1, double d2, const double* &B){ 
+  /*comment------------------------------------------------
+   * E - linear combination of matrix  2 ellipses
+   * E(l) = l*A +(1-l)*B
+   * detE(l) =  k2*l^2 + k1*l + k0
+   * when
+   * k2 = (b11*b22-b12^2)+(b11*b22-b12^2) - (a22b11+a11b22-2a12b12) = detA + detB - detcnst
+   * k1 = (a22b11+a11b22-2a12b12) - 2(b11*b22-b12^2) = detcnst - 2*detB
+   * k0 = b11*b22-b12^2 = detB
+   */
+  double detA = A[0]*A[2] - A[1]*A[1];
+  double detB = B[0]*B[2] - B[1]*B[1];
+  double detcnst = A[2]*B[0] + A[0]*B[2] - 2* A[1]*B[1];
+
+  /*comment------------------------------------------------
+   * Kalman filter k(l) = 1- l(1-l)(d-c)^T*B*E^(-1)*A(d-c) =>
+   * detE(l)*K(l) = detE(l) + detE(l)*(l^2-l)(d-c)^T*B*E(l)^(-1)*A(d-c)
+   *======>*/
+
+  /*comment------------------------------------------------
+   * (d-c)^T*B = (l1,l2) => l1 = b11(d1-c1) + b12(d2-c2); l2 = b12(d1-c1) + b22(d2-c2)
+   */
+  double l1 = B[0]*(d1-c1) + B[2]*(d2-c2);
+  double l2 = B[2]*(d1-c1) + B[3]*(d2-c2);
+  
+  /*comment------------------------------------------------
+   * A*(d-c) = (n1,n2)^T =>  n1 = a11(d1-c1) + a12(d2-c2); n2 = a12(d1-c1) + a22(d2-c2)
+   */
+  double n1 = A[0]*(d1-c1) + A[2]*(d2-c2);
+  double n2 = A[1]*(d1-c1) + A[2]*(d2-c2);
+  
+  /*comment------------------------------------------------
+   * detE(l)*(l1,l2)*E(l)^(-1)*(n1, n2)^T = z1*l + z2
+   * z1 = n1*l1(a22-b22) + n2*l2(a11-b11)   +  (a12-b12)(n1*l2 - n2*l1) 
+   * z2 = n1(l1*b22-l2*b12) + n2(l2*b11-l1*b12)
+   */
+  double z1 = n1*l1*(A[2]-B[2]) + n2*l2*(A[0]-B[0]) + (A[1]-B[1])*(n1*l2 - n2*l1);
+  double z2 = n1*(l1*B[2]-l2*B[1]) + n2*(l2*B[0]-l1*B[1]);
+  
+  /*comment------------------------------------------------
+   * detE(l)*K(l) = detE(l) + (l^2-l)(z1*l +z2) = (k2*l^2 + k1*l + k0) + (z1*l^3 + (z2 -z1)*l^2 - z2*l) =>
+   * detE(l)*K(l) = C3*l^3 + C2*l^2 + C1*l + C0
+   * when
+   * C3 = z1
+   * C2 = k2 + z2 - z1
+   * C1 = k1 - z2
+   * C0 = k0
+   */
+  double C0 = detB; 
+  double C1 = detcnst - 2*detB - z2; 
+  double C2 = detA + detB - detcnst + z2 - z1; 
+  double C3 = z1; 
+  unsigned int count = seqShturm(0, C0, C1, C2, C3) - seqShturm(1, C0, C1, C2, C3);
+  return count;
+}
+
+//ExclKalman*********************************************************************
+/* INPUT : parameters:
+ * 1 : (c1, c2) -center (x0,y0), A -  M-values of matrix (a11,a12, a12,a22)
+ * 2 : (d1, d2) -center (x0,y0), B -  M-values of matrix (b11,b12, b12,b22)
+ * OUTPUT : The function returns the number of roots of the Kalman filter for lmb1 and lmb2
+ * NOTE : if roots = 4 => exist exclusion
+ */
+unsigned int Geom3::ExclKalman(double c1, double c2, const double* &A, double d1, double d2, const double* &B){ 
+  /*comment------------------------------------------------
+   * E - linear combination: E(l) = l*A +(1-l)*(-B) = l*A +(l-1)*B => detE(l) =  k2*l^2 + k1*l + k0
+   * when k2 = detA + detB - detcnst;  k1 = detcnst - 2*detB; k0 = detB
+   */
+  double detA = A[0]*A[2] - A[1]*A[1];
+  double detB = B[0]*B[2] - B[1]*B[1];
+  double detcnst = 2*A[1]*B[1] - A[2]*B[0] - A[0]*B[2];
+  
+  /*comment------------------------------------------------
+   * Kalman filter k(l) = 1- l(1-l)(d-c)^T*(-B)*E^(-1)*A(d-c) =>
+   * detE(l)*K(l) = detE(l) + detE(l)*(l^2-l)(d-c)^T*(-B)*E(l)^(-1)*A(d-c)
+   *======>*/
+  
+  /*comment------------------------------------------------
+   * (d-c)^T*(-B) = (l1,l2) => 
+   * l1 = b11(d1-c1) + b12(d2-c2); l2 = b12(d1-c1) + b22(d2-c2)
+   */
+  double l1 = B[0]*(c1-d1) + B[2]*(c2-d2);
+  double l2 = B[2]*(c1-d1) + B[3]*(c2-d2);
+  
+  /*comment------------------------------------------------
+   * A*(d-c) = (n1,n2)^T =>  n1 = a11(d1-c1) + a12(d2-c2); n2 = a12(d1-c1) + a22(d2-c2)
+   */
+  double n1 = A[0]*(d1-c1) + A[2]*(d2-c2);
+  double n2 = A[1]*(d1-c1) + A[2]*(d2-c2);
+  
+  /*comment------------------------------------------------
+   * detE(l)*(l1,l2)*E(l)^(-1)*(n1, n2)^T = z1*l + z2
+   * z1 = n1*l1(a22+b22) + n2*l2(a11+b11) - (a12+b12)(n1*l2+n2*l1) 
+   * z2 = n1(l2*b12-l1*b22) + n2(l1*b12-l2*b11)
+   */
+  double z1 = n1*l1*(A[2]+B[2]) + n2*l2*(A[0]+B[0]) - (A[1]-B[1])*(n1*l2 + n2*l1);
+  double z2 = n1*(l2*B[1]-l1*B[2]) + n2*(l1*B[1]-l2*B[0]);
+  
+  /*comment------------------------------------------------
+   * detE(l)*K(l) = detE(l) + (l^2-l)(z1*l +z2) = (k2*l^2 + k1*l + k0) + (z1*l^3 + (z2 -z1)*l^2 - z2*l) =>
+   * detE(l)*K(l) = C3*l^3 + C2*l^2 + C1*l + C0
+   * when C3 = z1; C2 = k2 + z2 - z1; C1 = k1 - z2; C0 = k0
+   */
+  double C0 = detB; 
+  double C1 = detcnst - 2*detB - z2; 
+  double C2 = detA + detB - detcnst + z2 - z1; 
+  double C3 = z1; 
+  
+  /*comment------------------------------------------------
+   * Eigenvalues
+   */
+  double detApB = (B[0]+A[0])*(A[2]+B[2]) - (A[1]+B[1])*(A[1]+B[1]);
+  
+  double b = 2*B[1]*(A[1]+B[1]) - B[2]*(A[0]+B[0]) - B[0]*(A[2]+B[2]); 
+  
+  double D = b*b - 4*detB*detApB;
+  
+  double lb1 = ((-1)*b - sqrt(D))/(2*detApB);
+  double lb2 = ((-1)*b + sqrt(D))/(2*detApB);
+  
+  if (lb1 > lb2) {D = lb1; lb1 = lb2; lb2 = lb1;} //(lb1<lb2)&&((lb1*lb2)>0)
+  
+  unsigned int count = (seqShturm(0,C0,C1,C2,C3)-seqShturm(lb1,C0,C1,C2,C3))+(seqShturm(lb2,C0,C1,C2,C3)-seqShturm(1,C0,C1,C2,C3));
+  return count;
+}
+/*
 //InitialGeometry***************************************************************
 void Geom3::InitialGeometry(unsigned int i, const std::list<Ellps> &ellpses){
   label_t = i;
@@ -65,107 +229,8 @@ void Geom3::UpdateGeometry (const Ellps &Et){
     else{++Ei;} // => exist intersection next *Ei 
    }
   }
-  */
+  
 } 
 
-//EmptyGeometry*****************************************************************
-bool Geom3::EmptyGeometry() {return fl_empty;}
-
-//******************************************************************************
-unsigned int Geom3::filtKalman(double c1, double c2, const Mat2X2 &A, double d1, double d2, const Mat2X2 &B)
-{ 
-  // E(lambda) = lambda*A +(1-lambda)*B
-  //polynome: det(E(lambda)) = k2*lambda^2 + k1*lambda +k0
-  double k_cnst = A.get_el(1,1)*B.get_el(0,0) + A.get_el(0,0)*B.get_el(1,1) - 2*A.get_el(0,1)*B.get_el(0,1);
-  
-  double k0 = B.get_el(0,0)*B.get_el(1,1) - B.get_el(0,1)*B.get_el(0,1);
-  double k1 = k_cnst = k_cnst - 2* k0;
-  double k2 = A.get_el(0,0)*A.get_el(1,1) - A.get_el(0,1)*A.get_el(0,1) + k0 - k_cnst;
-  
-  //det(E(lambda))K(lambda) = det(E(lambda)) + (lambda^2-lambda)((d-c)^T )B(E(lambda)^(-1))A(d-c) =>
-  //det(E(lambda)) *K(lambda) = z1*lambda^3 + (k2+z2-z1)*lambda^2 + (k1-z2)*lambda + k0
-    
-  //(d-c)^T*B = (l1,l2) => l1 = b11d1-b11c1+b12d2-b12c2; l2 = b12d1-b12c1+b22d2-b22c2
-  double l1 = B.get_el(0,0)*(d1 - c1) + B.get_el(0,1)*(d2 - c2);
-  double l2 = B.get_el(0,1)*(d1 - c1) + B.get_el(1,1)*(d2 - c2);
-  
-  //A*(d-c) = (n1,n2)^T => n1 = a11d1-a11c1+a12d2-a12c2; n2 = a12d1-a12c1+a22d2-a22c2
-  double n1 = A.get_el(0,0)*(d1 - c1) + A.get_el(0,1)*(d2 - c2);
-  double n2 = A.get_el(0,1)*(d1 - c1) + A.get_el(1,1)*(d2 - c2);
-  
-  //z1 = n1l1a22 - n1l1b22 + n1l2a12 +n2l1b12 -n2l1a12 +n2l2a11 - n2l2b11
-  //z2 = n1l1b22 - n1l2b12 + n2l2b11 - n2l1b12
-  
-  double z1 = n1*l1*A.get_el(1,1) - n1*l1*B.get_el(1,1) + n1*l2*A.get_el(0,1) +n2*l1*B.get_el(0,1) -n2*l1*A.get_el(0,1) +n2*l2*A.get_el(0,0) - n2*l2*B.get_el(0,0);
-  double z2 = n1*l1*B.get_el(1,1) - n1*l2*B.get_el(0,1) + n2*l2*B.get_el(0,0) - n2*l1*B.get_el(0,1);
-  
-  /*Shturm sequence: f_1 = f' , fi = -(f_(i-2) mod f_(i-1)), i = 2,3 
-  det(E(lambda)) *K(lambda) = C3*lambda^3 + C2*lambda^2 + C1*lambda + C0
-   */
-  double C0 = k0; 
-  double C1 = k1 - z1; 
-  double C2 = k2 + z2 - z1; 
-  double C3 = z1; 
-  double CC0 = C1*C2/(9*C3) - C0; 
-  double CC1 =  2*C2*C2/(9*C3)  - 2*C1/3;
-  
-  unsigned int count = seqShturm(0, C0, C1, C2, C3,CC0, CC1) - seqShturm(1, C0, C1, C2, C3,CC0, CC1);
-  return count;
-}
-//------------------------------------------------------------------------------
-unsigned int Geom3::seqShturm(double lmb, double C0, double C1, double C2, double C3,double CC0,double CC1)
-{
-  double* Sh_f = new double [4];
-  Sh_f[0] = C3*lmb*lmb*lmb + C2*lmb*lmb + C1* lmb +C0;
-  Sh_f[1] = 3*C3*lmb*lmb +2*C2*lmb + C1;
-  Sh_f[2] = CC1*lmb + CC0;
-  Sh_f[3] = CC0/CC1* (2*C2 - 3*C3*CC0/C1) - C1;
-  unsigned int count = 0;
-  //count sign
-  for (unsigned int i = 0; i < 3 ; i++){
-    if (Sh_f[i] < 0 && Sh_f[i+1] > 0 || Sh_f[i] > 0 && Sh_f[i+1] < 0) {count++;}
-  }
-  //memory
-  delete []Sh_f;
-  Sh_f = NULL;
-  return count;
-}
-//#Stock########################################################################
-
-/*
- functions: lambda = 0, lambda = 1,
- f_0 = C0;
- f_1 = C3+C2+C1+C0;
- f1_0 = C1;
- f1_1 = 3*C3 +2*C2 +C1;
- f2_0 = CC0;
- f2_1 = CC1 +CC0;
- f3_01 = CC0*(2*C2-(3*C3*CC0)/C1)/CC1 - C1; 
- */
-/*
- double* Sh_f0 = new double [4];
- double* Sh_f1 = new double [4];
- Sh_f0[0] = k0;
- Sh_f1[0] = k2 + z2 + k1 - z1 + k0;
- Sh_f0[1] = k1 - z1;
- Sh_f1[1] = 2*(k2 + z2) + k1;
- Sh_f0[2] = (k1 - z1)*(k2 + z2 - z1)/(9*z1) - k0;
- Sh_f1[2] = 2*(k2 + z2 - z1)*(k2 + z2 - z1)/(9*z1)  - 2*(k1 - z1)/3 + (k1 - z1)*(k2 + z2 - z1)/(9*z1) - k0;
- Sh_f0[3] = ((k1 - z1)*(k2 + z2 - z1)/(9*z1) - k0) * (2*(k2 + z2 - z1)-(3*z1*((k1 - z1)*(k2 + z2 - z1)/(9*z1) - k0))/(k1 - z1))/(2*(k2 + z2 - z1)*(k2 + z2 - z1)/(9*z1)  - 2*(k1 - z1)/3) - (k1 - z1); 
- Sh_f1[3] =  Sh_f0[3];
- unsigned int count0 = 0;
- unsigned int count1 = 0;
- 
- //count sign
- for (unsigned int i = 0; i < 3 ; i++){
- if (Sh_f0[i] < 0 && Sh_f0[i+1] > 0 || Sh_f0[i] > 0 && Sh_f0[i+1] < 0) {count0++;}
- if (Sh_f1[i] < 0 && Sh_f1[i+1] > 0 || Sh_f1[i] > 0 && Sh_f1[i+1] < 0) {count1++;}
- }
- //memory  
- delete []Sh_f0;
- delete []Sh_f1;
- Sh_f0 = NULL;
- Sh_f1 = NULL;
- return (count0-count1); 
  */
 //##############################################################################

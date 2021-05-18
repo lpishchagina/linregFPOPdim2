@@ -39,7 +39,7 @@ List lrFPOP2D(std::vector<double> x, std::vector<double> y, double penalty, int 
   test = false;
   if (type == 0)
   {
-    //test = true;//
+    //test = true;//PELT
     OP<Geom0> N = OP<Geom0>(x, y, penalty);
     N.algoFPOP(x, y, type, test);  
     res["chpts"] = N.get_chpts();
@@ -49,7 +49,7 @@ List lrFPOP2D(std::vector<double> x, std::vector<double> y, double penalty, int 
   }
   if (type == 3)
   {
-    //test = true;//
+    //test = true;//FPOP3
     OP<Geom3> N = OP<Geom3>(x, y, penalty);
     N.algoFPOP(x, y, type, test);  
     res["chpts"] = N.get_chpts();
