@@ -32,13 +32,10 @@ class Geom3
     unsigned int get_label_t() const;
     std::list<Ellps> get_ellps() const;
     
-    unsigned int InterKalman(double c1, double c2, const double* &A, double d1, double d2, const double* &B);
-    unsigned int ExclKalman(double c1, double c2, const double* &A, double d1, double d2, const double* &B);
-    unsigned int seqShturm(double l, double C0, double C1, double C2, double C3);
-    
-//    double* eigenValues(const Mat2X2 &A, const Mat2X2 &B);
-   
-   
+    int InterKalman(double c1, double c2, const double* A, double d1, double d2, const double* B);
+    int ExclKalman(double c1, double c2, const double* A, double d1, double d2, const double* B);
+    int seqShturm(double l, double C0, double C1, double C2, double C3);
+
     void InitialGeometry(unsigned int i, const std::list<Ellps> &ellpses);
     void UpdateGeometry(const Ellps &Et);
     bool EmptyGeometry();

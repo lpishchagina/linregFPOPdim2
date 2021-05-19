@@ -31,18 +31,16 @@ bool Geom3::EmptyGeometry() {return fl_empty;}
 //seqShturm*********************************************************************
 /* INPUT : l -  specified value
  * C0,C1,C2,C3 - coefficient of equation f(x) = C3*x^3+C2*x^2+C1*x+C0  
- * 
  * OUTPUT : The function returns the number of changes of signs in the Shturm sequence at the specified value "l"
  */
-unsigned int Geom3::seqShturm(double l, double C0, double C1, double C2, double C3){
+int Geom3::seqShturm(double l, double C0, double C1, double C2, double C3){
   /*comment------------------------------------------------
    * Shturm sequence
    * f(l) = C3*l^3+C2*l^2+C1*l+C0
    * f1(l) = f'(l) =3*C3*l^2+2*C2*l+C1
    * f2(l) = C5*l + C4
    * f3(l) = (C4/C5)*(2*C2 - 3*C3*C4/C1) - C1
-   * when 
-   * C4 = ((1/9)*(C1*C2)/C3 - C0)
+   * when  C4 = ((1/9)*(C1*C2)/C3 - C0)
    * C5 = ((2/9)*(C2*C2/C3) - (2/3)*C1)
    */
   double C4 = (1/9)*(C1*C2)/C3 - C0;
@@ -53,7 +51,6 @@ unsigned int Geom3::seqShturm(double l, double C0, double C1, double C2, double 
    * Sh_f = (f(l),f1(l),f2(l), f3(l))
    */
   double* Sh_f = new double [4];
-  
   Sh_f[0] = C3*l*l*l + C2*l*l + C1*l + C0;
   Sh_f[1] = 3*C3*l*l + 2*C2*l + C1;
   Sh_f[2] = C5*l + C4;
@@ -62,13 +59,15 @@ unsigned int Geom3::seqShturm(double l, double C0, double C1, double C2, double 
   /*comment------------------------------------------------
    * count - number of changes of signs in the Shturm sequence 'Sh_f'
    */
-  unsigned int count = 0;
+  int count = 0;
   for (unsigned int i = 0; i < 3 ; i++){
     if (Sh_f[i] < 0 && Sh_f[i+1] > 0 || Sh_f[i] > 0 && Sh_f[i+1] < 0) {count++;}
   }
   /*memory cleaning-------------------------------------*/
   delete []Sh_f;
   Sh_f = NULL;
+  
+  Rcpp::Rcout<<"count sh="<< count<<std::endl;
   
   return count;
 }
@@ -80,7 +79,7 @@ unsigned int Geom3::seqShturm(double l, double C0, double C1, double C2, double 
  * OUTPUT : The function returns the number of roots of the Kalman filter
  * NOTE : if roots = 2 => exist intersection
  */
-unsigned int Geom3::InterKalman(double c1, double c2, const double* &A, double d1, double d2, const double* &B){ 
+int Geom3::InterKalman(double c1, double c2, const double* A, double d1, double d2, const double* B){ 
   /*comment------------------------------------------------
    * E - linear combination of matrix  2 ellipses
    * E(l) = l*A +(1-l)*B
@@ -132,7 +131,10 @@ unsigned int Geom3::InterKalman(double c1, double c2, const double* &A, double d
   double C1 = detcnst - 2*detB - z2; 
   double C2 = detA + detB - detcnst + z2 - z1; 
   double C3 = z1; 
-  unsigned int count = seqShturm(0, C0, C1, C2, C3) - seqShturm(1, C0, C1, C2, C3);
+  unsigned int count = abs(seqShturm(0, C0, C1, C2, C3) - seqShturm(1, C0, C1, C2, C3));
+
+  Rcpp::Rcout<<"count int="<< count<<std::endl;
+  
   return count;
 }
 
@@ -143,7 +145,7 @@ unsigned int Geom3::InterKalman(double c1, double c2, const double* &A, double d
  * OUTPUT : The function returns the number of roots of the Kalman filter for lmb1 and lmb2
  * NOTE : if roots = 4 => exist exclusion
  */
-unsigned int Geom3::ExclKalman(double c1, double c2, const double* &A, double d1, double d2, const double* &B){ 
+int Geom3::ExclKalman(double c1, double c2, const double* A, double d1, double d2, const double* B){ 
   /*comment------------------------------------------------
    * E - linear combination: E(l) = l*A +(1-l)*(-B) = l*A +(l-1)*B => detE(l) =  k2*l^2 + k1*l + k0
    * when k2 = detA + detB - detcnst;  k1 = detcnst - 2*detB; k0 = detB
@@ -202,10 +204,13 @@ unsigned int Geom3::ExclKalman(double c1, double c2, const double* &A, double d1
   
   if (lb1 > lb2) {D = lb1; lb1 = lb2; lb2 = lb1;} //(lb1<lb2)&&((lb1*lb2)>0)
   
-  unsigned int count = (seqShturm(0,C0,C1,C2,C3)-seqShturm(lb1,C0,C1,C2,C3))+(seqShturm(lb2,C0,C1,C2,C3)-seqShturm(1,C0,C1,C2,C3));
+  int count = abs((seqShturm(0,C0,C1,C2,C3)-seqShturm(lb1,C0,C1,C2,C3)))+abs((seqShturm(lb2,C0,C1,C2,C3)-seqShturm(1,C0,C1,C2,C3)));
+  
+  Rcpp::Rcout<<"count excl="<< count<<std::endl;
+  
   return count;
 }
-/*
+
 //InitialGeometry***************************************************************
 void Geom3::InitialGeometry(unsigned int i, const std::list<Ellps> &ellpses){
   label_t = i;
@@ -216,21 +221,18 @@ void Geom3::InitialGeometry(unsigned int i, const std::list<Ellps> &ellpses){
 
 //UpdateGeometry****************************************************************
 void Geom3::UpdateGeometry (const Ellps &Et){
-  double d_Ei_cEt, d_Et_cEi;// distance from first ellipse to center  of second ellipse
   std::list<Ellps>::iterator Ei = ellps.begin();
-  /*
   while( Ei != ellps.end()){
-   if (filtKalman(Et.get_x0(), Et.get_y0(), Et.get_Sigma(), Ei.get_x0(), Ei.get_y0(), Ei.get_Sigma()) ==2) {Ei = ellps.erase(Ei);} 
-   else{
-     if (condition excl) {
-       fl_empty = true;
-       return;
-     } 
-    else{++Ei;} // => exist intersection next *Ei 
-   }
+    if (InterKalman(Et.g_x0(),Et.g_y0(),Et.g_M(), (*Ei).g_x0(),(*Ei).g_y0(),(*Ei).g_M()) == 2) { Ei = ellps.erase(Ei);} 
+    else{
+      if ((*Ei).AreaEllps() > Et.AreaEllps()){
+        if (ExclKalman(Et.g_x0(),Et.g_y0(),Et.g_M(), (*Ei).g_x0(),(*Ei).g_y0(),(*Ei).g_M()) == 4) {
+          fl_empty = true;
+          return;
+        }
+      }
+      ++Ei;
+    }
   }
-  
-} 
-
- */
+}
 //##############################################################################
