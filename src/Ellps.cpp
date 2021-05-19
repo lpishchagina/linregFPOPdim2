@@ -4,11 +4,9 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 //constructor*******************************************************************
-Ellps::Ellps(lrCost Q, double mdif)
-{
+Ellps::Ellps(lrCost Q, double mdif){
   /*comment-------------------------------------------------
-   * forme: Ak^2+2Bak+Ca^2+2Dk+2Ea+fr_mb
-   * when free member is fr_mb = F - mdif 
+   * forme: Ak^2+2Bak+Ca^2+2Dk+2Ea+fr_mb when free member is fr_mb = F - mdif 
    */         
   double fr_mb = Q.g_F() - mdif;
   
@@ -20,39 +18,30 @@ Ellps::Ellps(lrCost Q, double mdif)
   double inv3 = Q.g_A()*Q.g_C()*fr_mb + 2*Q.g_B()*Q.g_D()*Q.g_E() - Q.g_C()*Q.g_D()*Q.g_D() - Q.g_A()*Q.g_E()*Q.g_E() - Q.g_B()*Q.g_B()*fr_mb;
   
   /*comment------------------------------------------------
-   *  Matrix transformation:
-   *  before: (A B//B C) => after: (A/tr_cnst B/tr_cnst // C/tr_cnst B/tr_cnst)
-   *  when tr_cnst = (CD^2 - 2BDE+AE^2)/(AC-B^2) - fr_mb
-   *  => M = (A/tr_cnst, B/tr_cnst, C/tr_cnst)
+   *  Matrix transformation: before: (A B//B C) => after: (A/tr_cnst B/tr_cnst // C/tr_cnst B/tr_cnst)
+   *  when tr_cnst = (CD^2 - 2BDE+AE^2)/(AC-B^2) - fr_mb  => M = (A/tr_cnst, B/tr_cnst, C/tr_cnst)
    */
- 
   double tr_cnst = (Q.g_C()*Q.g_D()*Q.g_D() - 2*Q.g_B()*Q.g_D()*Q.g_E() +  Q.g_A()*Q.g_E()*Q.g_E())/inv2 - fr_mb;
   M = new double[3];
   M[0] = Q.g_A()/tr_cnst;
   M[1] = Q.g_B()/tr_cnst;
   M[2] = Q.g_C()/tr_cnst;
-    
-  // - Sigma = Mat2X2(Q.g_A()/tr_cnst, Q.g_B()/tr_cnst, Q.g_B()/tr_cnst, Q.g_C()/tr_cnst);
-  
+
   /*comment------------------------------------------------
-   *  Center coordinates of ellipse
-   *  x0 = (BE-DC)/(AC-B^2);
-   *  y0 = (BD-AE)/(AC-B^2); 
+   *  Center coordinates of ellipse x0 = (BE-DC)/(AC-B^2);  y0 = (BD-AE)/(AC-B^2); 
    */
   x0 = (Q.g_B()*Q.g_E() - Q.g_D()*Q.g_C())/inv2;
   y0 = (Q.g_B()*Q.g_D() - Q.g_A()*Q.g_E())/inv2;
   
   /*comment------------------------------------------------
-   *  Eigenvalues
-   *  lmbd1 >=lmbd2 
+   *  Eigenvalues  lmbd1 >=lmbd2 
    */
   lmbd1 = (inv1 - sqrt(inv1*inv1 - 4*inv2))/2;
   lmbd2 = (inv1 + sqrt(inv1*inv1 - 4*inv2))/2;
   if(lmbd2 > lmbd1){double rt = lmbd1; lmbd1 = lmbd2; lmbd2 = rt;}
   
   /*comment------------------------------------------------
-   *  invariant condition:
-   *  (theta1^2/C1 + theta2^2/A1 = -F1) <=> (A1+C1=inv1) && (A1C1=inv2) && (A1C1F1=inv3)
+   *  invariant condition: (theta1^2/C1 + theta2^2/A1 = -F1) <=> (A1+C1=inv1) && (A1C1=inv2) && (A1C1F1=inv3)
    *   => A1 =lmbd1; C1=inv1-lmbd1; F1=inv3/inv2 ; 
    *   a =sqrt(-F1/C1); b = sqrt(-F1/A1); c = 1; angl = atan((A1-A)/B), Slope: k1,k2, Focus:Fs
    */
@@ -102,7 +91,12 @@ double Ellps::g_lmbd2() const {return lmbd2;}
 double Ellps::g_a() const {return a;}
 double Ellps::g_b() const {return b;}
 double Ellps::g_Fs() const {return Fs;}
-// - Mat2X2 Ellps::g_Sigma() const {return Sigma;}
+
+//Area**************************************************************************
+double Ellps::AreaEllps() const{
+  double area = (3.14)*a*b;
+  return area;
+}
 
 //dist_pnts********************************************************************
 double Ellps::dst_pnts(double x1, double y1, double x2, double y2){
