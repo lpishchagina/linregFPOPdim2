@@ -101,13 +101,13 @@ public:
     std::list<Ellps> list_Ellps;//list of active ellipses(t-1)
     for (unsigned int t = 0; t < n ; t++){
       cost = lrCost(t, t, Sum[t], Sum[t+1], gCost[t]);//min_val tt = INFINITY=> t nne peut pas candidate?
-      min_val = cost.get_min();              
+      min_val = cost.g_min();              
       kTemp =  cost.g_k();   
       aTemp = cost.g_a(); 
       lbl = t;
       list_Ellps.clear();
       
-     // Rcpp::Rcout<<"1. min_val="<< min_val<<" kTemp="<< kTemp<<" aTemp="<< aTemp<<" lbl="<< lbl<<std::endl;
+      Rcpp::Rcout<<"1. min_val="<< min_val<<" kTemp="<< kTemp<<" aTemp="<< aTemp<<" lbl="<< lbl<<std::endl;
      
       //First run: searching min------------------------------------------------
       typename std::list<GeomX>::reverse_iterator rit_geom = list_geom.rbegin();
@@ -116,11 +116,11 @@ public:
         // Searching: min
         cost = lrCost(u, t, Sum[u], Sum[t + 1], gCost[u]);
         
-        //Rcpp::Rcout<<"2. min_val="<< min_val<<" cost.get_min()="<< cost.get_min()<<std::endl;
+        //Rcpp::Rcout<<"2. min_val="<< min_val<<" cost.get_min()="<< cost.g_min()<<std::endl;
         
-        if( min_val >= cost.get_min()){
+        if( min_val >= cost.g_min()){
           lbl = u;
-          min_val = cost.get_min();
+          min_val = cost.g_min();
           kTemp = cost.g_k();
           aTemp = cost.g_a();  
         }
@@ -137,7 +137,7 @@ public:
       //new min 
       gCost[t + 1] = min_val + penalty;
       
-    //  Rcpp::Rcout<<"RES ITER. min_val="<< min_val<<" kTemp="<< kTemp<<" aTemp="<< aTemp<<" lbl="<< lbl<<"gCost[t + 1]=" <<gCost[t + 1] <<std::endl;
+      Rcpp::Rcout<<"RES ITER. min_val="<< min_val<<" kTemp="<< kTemp<<" aTemp="<< aTemp<<" lbl="<< lbl<<"gCost[t + 1]=" <<gCost[t + 1] <<std::endl;
       
       //Initialisation of geometry----------------------------------------------
       geom.InitialGeometry(t, list_Ellps);
@@ -150,13 +150,14 @@ public:
         cost = lrCost(lbl, t, Sum[lbl], Sum[t + 1], gCost[lbl]);
         mdif = gCost[t + 1] - gCost[lbl]; //if qit(a,k)> mt+penalty =>PELT
         
-     //  Rcpp::Rcout<<"mdif="<< mdif<<std::endl;
+      // Rcpp::Rcout<<"mdif="<< mdif<<std::endl;
         
         //PELT
         if (mdif <= 0){
           it_geom = list_geom.erase(it_geom);
           --it_geom;
-          //Rcpp::Rcout<<"PELT"<< mdif<<std::endl;
+          
+          Rcpp::Rcout<<"PELT"<< mdif<<std::endl;
         }
         //FPOP
         if (mdif > 0){
@@ -164,6 +165,8 @@ public:
           if (it_geom -> EmptyGeometry()){
             it_geom = list_geom.erase(it_geom);
             --it_geom;
+            Rcpp::Rcout<<"FPOP"<< mdif<<std::endl;
+              
           }
           else {
             if (test_mode == true && (type == 2 || type == 3))
