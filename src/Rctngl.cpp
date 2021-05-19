@@ -46,22 +46,22 @@ double Rctngl::dst_pnts(double a1, double b1, double a2, double b2){return sqrt(
 
 //get_r*************************************************************************
 double Rctngl::get_r(double x, double y, const Ellps &E){      //r = |2rx-x0|*|2ry-y0|/sqrt((2rx-x0)^2sin^2(phi) + (2ry-y0)^2cos^2(phi)), x0,y0 = (0,0)
-  double csns = sqrt(1/((dsY_to_y(x,y,E.get_d1(),E.get_d2(),E.get_angl())/dsX_to_x(x,y,E.get_d1(),E.get_d2(),E.get_angl()))*(dsY_to_y(x,y,E.get_d1(),E.get_d2(),E.get_angl())/dsX_to_x(x,y,E.get_d1(),E.get_d2(),E.get_angl()))+1));
+  double csns = sqrt(1/((dsY_to_y(x,y,E.g_x0(),E.g_y0(),E.g_angl())/dsX_to_x(x,y,E.g_x0(),E.g_y0(),E.g_angl()))*(dsY_to_y(x,y,E.g_x0(),E.g_y0(),E.g_angl())/dsX_to_x(x,y,E.g_x0(),E.g_y0(),E.g_angl()))+1));
   double sns = sqrt(1-csns*csns);
-  return (4*abs(E.get_a()*E.get_b())/sqrt(2*(E.get_b()*E.get_b()*csns*csns + E.get_a()*E.get_a()*sns*sns)));
+  return (4*abs(E.g_a()*E.g_b())/sqrt(2*(E.g_b()*E.g_b()*csns*csns + E.g_a()*E.g_a()*sns*sns)));
 }
 
 //EmptyIntersection*************************************************************
 bool Rctngl::EmptyIntersection(const Ellps &E){
   //Ellipse center inside rectangle => intersection
-  if (insd_pnt(E.get_d1(), E.get_d2())) {return false;}
+  if (insd_pnt(E.g_x0(), E.g_y0())) {return false;}
   
   //Ellipse center outside rectangle
   //ERROR!!!!переделать.. надо искать кратчайшие расстояния до граней
   //Ellipse center outside rectangle => no intersection if all distance (vertex, center) > Ellipse radius
-  if ( get_r(x1, y1, E)>= dst_pnts(x1, y1, E.get_d1(),E.get_d2())){return false;}
-  if ( get_r(x2, y2, E)>= dst_pnts(x2, y2, E.get_d1(),E.get_d2())){return false;}
-  if ( get_r(x3, y3, E)>= dst_pnts(x3, y3, E.get_d1(),E.get_d2())){return false;}
-  if ( get_r(x4, y4, E)>= dst_pnts(x4, y4, E.get_d1(),E.get_d2())){return false;}
+  if ( get_r(x1, y1, E)>= dst_pnts(x1, y1, E.g_x0(),E.g_y0())){return false;}
+  if ( get_r(x2, y2, E)>= dst_pnts(x2, y2, E.g_x0(),E.g_y0())){return false;}
+  if ( get_r(x3, y3, E)>= dst_pnts(x3, y3, E.g_x0(),E.g_y0())){return false;}
+  if ( get_r(x4, y4, E)>= dst_pnts(x4, y4, E.g_x0(),E.g_y0())){return false;}
   return true;
 }
